@@ -1,0 +1,89 @@
+# makefile for standard procedural databases
+# Author:  Eric Haines, 3D/Eye Inc.
+#   Works on HP 700 machines, might even work for you
+#
+#   NOTE: assumes you've done a
+#	export LDOPTS="-a shared"
+#   before running this makefile (i.e. it uses shared libraries)
+
+CC=cc -O -Aa
+SUFOBJ=.o
+SUFEXE=.exe
+INC=def.h lib.h
+LIBOBJ=drv_hp$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) libvec$(SUFOBJ)
+BASELIB=-L /usr/lib/X11R4 \
+			-lXwindow -lsbdl \
+			-lsb \
+			-lXhp11 -lX11 -ldld \
+			-lm
+
+all:		balls gears mount rings teapot tetra tree readdxf readnff \
+		sample lattice shells
+
+drv_hp$(SUFOBJ):	$(INC) drv_hp.c drv.h
+		$(CC) -c drv_hp.c
+
+libini$(SUFOBJ):	$(INC) libini.c
+		$(CC) -c libini.c
+
+libinf$(SUFOBJ):	$(INC) libinf.c
+		$(CC) -c libinf.c
+
+libpr1$(SUFOBJ):	$(INC) libpr1.c
+		$(CC) -c libpr1.c
+
+libpr2$(SUFOBJ):	$(INC) libpr2.c
+		$(CC) -c libpr2.c
+
+libpr3$(SUFOBJ):	$(INC) libpr3.c
+		$(CC) -c libpr3.c
+
+libply$(SUFOBJ):	$(INC) libply.c
+		$(CC) -c libply.c
+
+libdmp$(SUFOBJ):	$(INC) libdmp.c
+		$(CC) -c libdmp.c
+
+libvec$(SUFOBJ):	$(INC) libvec.c
+		$(CC) -c libvec.c
+
+balls$(EXE):		$(LIBOBJ) balls.c
+		$(CC) -o balls$(EXE) balls.c $(LIBOBJ) $(BASELIB)
+
+gears$(EXE):		$(LIBOBJ) gears.c
+		$(CC) -o gears$(EXE) gears.c $(LIBOBJ) $(BASELIB)
+
+mount$(EXE):		$(LIBOBJ) mount.c
+		$(CC) -o mount$(EXE) mount.c $(LIBOBJ) $(BASELIB)
+
+rings$(EXE):		$(LIBOBJ) rings.c
+		$(CC) -o rings$(EXE) rings.c $(LIBOBJ) $(BASELIB)
+
+teapot$(EXE):		$(LIBOBJ) teapot.c
+		$(CC) -o teapot$(EXE) teapot.c $(LIBOBJ) $(BASELIB)
+
+tetra$(EXE):		$(LIBOBJ) tetra.c
+		$(CC) -o tetra$(EXE) tetra.c $(LIBOBJ) $(BASELIB)
+
+tree$(EXE):		$(LIBOBJ) tree.c
+		$(CC) -o tree$(EXE) tree.c $(LIBOBJ) $(BASELIB)
+
+readdxf$(EXE):		$(LIBOBJ) readdxf.c
+		$(CC) -o readdxf$(EXE) readdxf.c $(LIBOBJ) $(BASELIB)
+
+readnff$(EXE):		$(LIBOBJ) readnff.c
+		$(CC) -o readnff$(EXE) readnff.c $(LIBOBJ) $(BASELIB)
+
+sample$(EXE):		$(LIBOBJ) sample.c
+		$(CC) -o sample$(EXE) sample.c $(LIBOBJ) $(BASELIB)
+
+lattice$(EXE):		$(LIBOBJ) lattice.c
+		$(CC) -o lattice$(EXE) lattice.c $(LIBOBJ) $(BASELIB)
+
+shells$(EXE):		$(LIBOBJ) shells.c
+		$(CC) -o shells$(EXE) shells.c $(LIBOBJ) $(BASELIB)
+
+clean:
+	rm -f balls gears mount rings teapot tetra tree readdxf readnff \
+		sample lattice shells
+	rm -f $(LIBOBJ)

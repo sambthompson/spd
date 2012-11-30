@@ -1,0 +1,220 @@
+SPD 3.3 Enhanced - June 1, 1994
+-------------------------------
+
+by Alexander Enzmann, w/modifications and additions by Eric Haines
+
+This is an updated version (a) of the Standard Procedural Databases (SPD v3.1)
+package & library code distributed by Eric Haines.  In addition to supporting
+the NFF object data format, the file "lib.c" has been extended to support the
+input format of the following renderers:
+
+	MTV (i.e. NFF)
+	POV-Ray 1.0
+	POV-Ray 2.0 [subject to change, though]
+	Polyray 1.4 to 1.6
+	Vivid 2.0
+	QRT 1.5
+	Rayshade 4.0.6
+	RTrace 8.0.0
+	Art 2.3 (from Vort)
+	RenderMan RIB
+	AutoCAD DXF [object data only]
+
+	In addition, there is a program nff2rad.c which converts NFF data to
+Radiance format (if anyone feels like folding this code into lib.c, please
+do).  Note that this converter is not listed in the makefile since it's
+special purpose (and standalone, so it's trivial to compile).
+
+	There is also an obj2nff.awk awk script which converts Wavefront OBJ
+files to NFF format.
+
+	A very rudimentary capability to dump polygons in the PLG format used
+by REND386 is also supported.  A very simple DXF reader has also been added.
+Its primary purpose was to display simple DXF files to the screen, but it has
+the side effect of being able to translate DXF files (only 3DFACE, though)
+to any of the above ray tracer file formats.
+
+	Simple display drivers have been included various flavors for the IBM
+PC (VGA, Zortech, Gnu C, etc), Apple Macintosh, and Hewlett Packard Starbase.
+Drivers are very simple to write:  you just need a display initialization
+routine, a display close routine, and a line drawing routine.  For Unix
+systems, for example, just copy and fill in unix.c.
+
+	Feel free to play with this stuff in whatever manner you choose.  Eric
+was kind enough to make the original freely available, and I'm not about to
+change that.  Of course this code is provided without any warranty of any
+kind, and no assumption of responsibility for any consequences of using it are
+made.
+
+
+Changes From Original
+---------------------
+
+The biggest changes to the original NFF/SPD stuff is in the area of surface
+shading attributes.  Since many raytracers support scale values for more
+components of the shading model than are present in NFF, these have been
+added.  The new components that have to be given in any call to
+"lib_output_color" are:  Ka (ambient), Shine (Phong specular), Shine angle
+(50% falloff angle for Phong spot, in degrees).
+
+The separation of the Phong values from the Ks (specular) value simply
+reflects the fact that most renderers don't force you to do both at the same
+time (RTrace being an exception).  Using a falloff angle for the Phong
+highlight may seem odd to you, but it really is sensible.  Smaller angles mean
+smaller highlights.
+
+Another change in the call to "lib_output_color" is a parameter that allows
+the definition of a texture name.  Many raytracers support named textures, by
+using a non-NULL string, you can specify a predefined texture name (these
+things are pretty renderer specific).  All of the examples use NULL, which
+defaults to plopping the current color into each primitive.
+
+
+Other stuff
+-----------
+
+The original documents have been included (unchanged).  As far as the
+documents for each of the raytracers mentioned above, you will have to get
+them from their source.  Most of those raytracers are available on Compuserve
+(go GRAPHDEV).  I haven't included one with this library.
+
+The database generation programs that were supplied with the original SPD
+package have been altered slightly to accept values from the command line.
+This makes it a little easier to generate outputs of varying complexity, and
+for the various renderers.  Typically the order of the command line options
+is:
+
+    prog [-s size_factor] [-r renderer] [-c|-t]
+
+i.e. "balls -s 2 -r 1 > balls.nff" generates a level 2 sphereflake in MTV's
+native format (NFF).  The meaning of "size_factor" varies from program to
+program, but basically indicates the complexity of the database that will be
+generated.  The "renderer" option corresponds to the definitions in "def.h"
+for the various supported renderers.  (i.e. 0 means display on screen, 2
+means POV-Ray 1.0, ...)  The [-c|-t] determines the output format, -c means
+output curved object primitives, -t means output polygonal patches in a mesh
+for curved surfaces.  By default NFF is output, though this is easily changed
+by changing OUTPUT_RT_DEFAULT in the code.  Also, typing "prog -?" gives you
+the options available.
+
+The DXF displayer/converter "showdxf" works as follows:
+
+    showdxf [-r renderer] filename
+
+"-r 0" means display on screen, the others convert, etc.  Two sample models,
+skull.dxf and f117.dxf, are provided as examples.  These were created with the
+HyperSpace(tm) 3-D digitizing system from Mira Imaging, Inc.  Contact them at
+801-466-4641 (Seth Jarvis) for more information.
+
+I've tried to comment to a reasonable extent, but to be sure, you will need to
+be reasonably fluent in "C" to make full use of this stuff.  (Or perhaps make
+bindings for Pascal & then just use as a library.)
+
+Depending on the features or speed of a particular renderer, you can tell the
+library code to output primitives in its native format.  The "sample.c" file
+has a simple scene, which can now be output in any supported format.  I have
+found this code to be very useful for generating frames for animations from
+"C" programs.  All you need to do is open a file for output, generate the
+database, and then use a "system" call to perform the render.  There are two
+other sample procedural model generation files, "lattice.c" and "shells.c".
+
+In addition to the sphere, polygon, and cylinder/cone objects that were
+supported in the original SPD, support has been added for:  boxes, tori,
+height fields, and superquadrics.  For those raytracers that do not support
+these as primitives, the output will be a large number of triangle patches.
+
+As far as video output goes, a couple of simple display driver files are
+included:  "mac.c", "ibm.c", "hp.c", "disp.c".  These are enough to make
+things work, but aren't meant to do much more than that.  If you wish to add a
+new display engine for a new machine type not mentioned here, you will need to
+create a new file and define the following functions:  display_init,
+display_close, display_clear, display_plot [actually, currently not used], and
+display_line [which is a little peculiar, see unix.c for details].  There is
+also a routine kbhit() for allowing display interrupt from the keyboard, if
+needed.  If you don't have access to display drivers for your machine, simply
+compile with "unix.c" - all display calls will then be ignored.
+
+Oh, yeah - the coordinate system used in this library is left-handed.  This
+may seem backwards for those of you used to one renderer vs another, but it is
+simple enough to change:  always negate the value of just one of the
+coordinates and you get right-handed coordinates.
+
+(Try "gears" for a real CPU eater)
+
+If you wish to reach the people who tweaked this stuff, we are on Compuserve
+(E-Mail, or in the GRAPHDEV forum) as:
+
+Alexander Enzmann
+  CIS: 70323,2461
+  internet: xander@mitre.org
+
+Eduard Schwan
+  CIS: 71513,2161
+  AppleLink: JL.MacTech
+  internet: 71513.2161@compuserve.com
+
+The original author, Eric Haines, is at erich@eye.com.
+
+
+Post-it Notes
+-------------
+
+   - POV-Ray does not support arbitrary polygons, you get lots of triangles
+   - RTrace does not support Phong highlights separately from reflections. It
+     is difficult to get RTrace surfaces to look like other renderers
+   - Polygons in PLG format will typically need to be scaled way up.
+   - Rayshade if compiled right out of the box won't take CR/LF pairs in files,
+     end of lines must be a single LF.
+   - QRT has bad refraction code and doesn't support arbitrary polygons
+   - The Macintosh programs require at least System 6.0.4, and run just
+     fine under System 7 & 7.1.  They also need a 68020 CPU, but do not
+     require an FPU.  And for some of the larger runs, they may need 2 or
+     3 mb of application heap space.  So they should run fine on LCs and
+     powerbooks, given enough RAM and disk space!
+
+History
+--------
+
+Sept. 6th release:
+  Antonio Costa [acc@asterix.inescn.pt]:
+   - Added support for IBM PC DJGPP (GNU C) with GRX graphics [drv_ibm.c]
+     and its makefile [makefile.dj] -- requires DJGPP graphic drivers
+     *.GRD or *.GRN -- allows high resolutions and is fast!
+   - Added EPSILON2 to defs.h because of precision problems (EPSILON is too
+     small) and changed lib.c to use EPSILON2.
+   - Added my own NFF generator: lattice -- creates a cubic lattice of
+     reflective spheres connected by matte cylinders (big CPU eater!)
+  Eric Haines [erich@eye.com]:
+   - Added shells.c, new procedural database generator (potential CPU eater)
+   - Added more PLATFORM_MULTITASK() calls.
+   - Added lib_open/lib_close calls (for easier maintenance and extension).
+
+Sept. 8th release:
+  Antonio Costa [acc@asterix.inescn.pt]:
+   - Corrected problem in lib_open/lib_close
+   - Corrected filenames for MAC version (*.out) of many generators
+   - Changed some things in shells.c (shells_get_opts and light source)
+
+Feb 10 1994 release:
+  Eduard Schwan [71513.2161@compuserve.com]:
+   - Added ReadNFF generator
+   - Renamed ShowDXF to ReadDXF, sounded more accurate (ReadOBJ in the works)
+   - Broke the giant lib.c file into several smaller libXXX.c files.  The
+     Mac Symantec compiler segments code on a per-file basis & lib.c was big
+     enough to force an unwanted large-model compile.
+   - Added a lib_output_comment routine in libprm.c, which lets you insert
+     general comment strings into the data stream in the appropriate dialect.
+
+June 1 1994 SPD 3.3f2 release:
+   - Added RIB file output
+   - Added DXF file output
+   - Split lib_get_opts to generator and reader specific command line
+     interpreters.
+   - More breakup of the lib*.c files to make Mac happy.
+
+August 7 1994 SPD 3.3f4 release:
+   - Fixed bug in Teapot that stomped the dialog display.
+   - Changed code to use standard system palette for screen display, so that
+      it no longer goofs up Finder colors upon exit
+   - Fixed "In Progress" dialog to refresh if switched out and back in.
+

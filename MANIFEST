@@ -1,0 +1,60 @@
+SPD 3.3 Enhanced contains the following files:
+
+    MANIFEST - what you are now reading
+    README.1st - readme file for the SPD enhancements
+    README - readme file for what the SPD is about
+    README.MAC - Macintosh version notes
+    NFF.DOC - a description of the Neutral File Format used in the SPD
+
+    makefile.hp  - Hewlett Packard HPUX makefile (includes X11 displayer)
+    makefile.ib2 - IBM PC Zortech makefile
+    makefile.ibm - IBM PC "generic" makefile
+    makempw.bin  - Macintosh MPW makefile (MacBinary format)
+    makems.bin  - Macintosh Symantec 7 proj/makefile (MacBinary format)
+    makefile.unx - Unix makefile
+    makefile.dj  - IBM PC DJGPP+GRX makefile
+
+    def.h - some useful "C" definitions
+    lib.h - globals and conversion/output library routine declarations
+    libdmp.c - library of post-process dump routines
+    libinf.c - library of info routines
+    libini.c - library of initialization routines
+    libply.c - library of polygon face routines
+    libpr1.c - library of general shape primitive routines, basic support
+    libpr2.c - library of general shape primitive routines, simple
+    libpr3.c - library of general shape primitive routines, more complex
+    libvec.c - library of vector & matrix routines
+    libvec.h - vector & matrix library defines and routine declarations
+
+    nff2rad.c - NFF to Radiance format converter by Greg Ward
+
+    balls.c - fractal ball object (a.k.a. sphereflake) generator
+    gears.c - 3D array of interlocking gears generator
+    mount.c - fractal mountain and 4 glass ball generator
+    rings.c - pyramid of dodecahedral rings generator
+    teapot.c - the famous teapot on a checkerboard generator
+    tetra.c - recursive tetrahedra generator
+    tree.c - tree generator
+
+    drv.h - display driver definitions
+    drv_hp.c - HP Starbase/X11 display driver
+    drv_ibm.c - IBM PC VGA display driver
+    drv_mac.c - Macintosh display driver
+    MacSPDt.bin - Macintosh resource text file (for MPW, MacBinary format)
+    MacSPDr.bin - Macintosh resource data file (MacBinary format)
+    drv_unix.c - generic Unix driver template (usable, but does not display)
+    drv_zrtc.c - Zortech graphics display driver
+
+    readdxf.c - DXF file reader/displayer/converter
+    view.dat - view for DXF displayer
+    f117.dxf - sample DXF file; F117 plane
+    skull.dxf - sample DXF file; skull
+    obj2nff.awk - a Wavefront OBJ to NFF conversion awk script
+
+    readnff.c - NFF file reader/displayer/converter
+
+    sample.c - an example file showing a simple scene
+    lattice.c - cubic lattice generator
+    shells.c - "shell" generator (but don't try to look inside!)
+
+[eof]
