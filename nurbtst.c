@@ -59,7 +59,7 @@ int curve_format ;
     COORD4 *ctlpts[6];
     COORD3 vec;
 	
-    lib_output_color(NULL, Red, 0.1, 0.7, 0.0, 0.7, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, Red, 0.1, 0.7, 0.0, 0.7, 10.0, 0.0, 1.0);
 	
     ctlpts[0] = ctlpts0;
     ctlpts[1] = ctlpts1;

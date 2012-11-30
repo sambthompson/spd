@@ -54,12 +54,15 @@ double x0, x1, y0, y1;
 		for (j=0,x=x0;j<width;j++,x+=deltax) {
 			PLATFORM_PROGRESS(0, i*width+j, height*width-1);
 			
-			/* your function here... */
+			/* your function here...
+			 * For the conversion to work for POV-Ray, Polyray, or any other
+			 * format which converts fixed range heightfield data to an image,
+			 * make sure the function produces values between -1 and 1. */
 			data[i][j] = (float)(c_const * cos(two_pi_a * sqrt(x * x + y * y)) *
-				exp(-b_const * sqrt(x * x + y * y)));
+				exp(-b_const * sqrt(x * x + y * y))/3.0);
 			
 			/* here's a simple sine wave function:
-			data[i][j] = (float)(cos(two_pi_a * x / 2.0) + sin(two_pi_a * y / 2.0)/2.0) ;
+			data[i][j] = (float)(((cos(two_pi_a * x / 2.0) + sin(two_pi_a * y / 2.0)/2.0))/1.5) ;
 			 */
 		}
 	}
@@ -113,7 +116,7 @@ char *argv[];
 	
 	/* Height field color - shiny_red */
 	SET_COORD3(obj_color, 1, 0.1, 0.1);
-	lib_output_color(NULL, obj_color, 0.1, 0.8, 0.0, 0.5, 20.0, 0.0, 1.0);
+	lib_output_color(NULL, obj_color, 0.1, 0.8, 0.0, 0.5, 40.0, 0.0, 1.0);
 	
 	/* Create the height field */
 	width = 32*(1 << (size_factor-1) ); /* 32, 64, 128, 256... */

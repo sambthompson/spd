@@ -205,7 +205,7 @@ char *argv[];
 						prev_elem = num_elem + 4 ;
 						/* new ring beginning - output color */
 						lib_output_color(NULL, ring_color[num_elem/5],
-							0.0, 0.5, 0.2, 0.3, 10.0, 0.0, 0.0);
+							0.0, 0.5, 0.2, 0.3, 37.0, 0.0, 0.0);
 					}
 					else {
 						prev_elem = num_elem - 1 ;

@@ -224,7 +224,7 @@ static void
 do_fill(fp)
 FILE *fp;
 {
-    float    r, g, b, ka, kd, ks, shine, phong_pow, ang, t, ior;
+    float    r, g, b, ka, kd, ks, ks_spec, phong_pow, ang, t, ior;
     COORD3 acolor;
 	
     if (fscanf(fp, "%f %f %f",&r, &g, &b) != 3) {
@@ -238,13 +238,15 @@ FILE *fp;
 		exit(1);
     }
 	
-    /* ooh yuck, some parms not input in NFF, so I hard-coded them for now [esp] */
+    /* some parms not input in NFF, so hard-coded. */
     ka = (float)0.1;
-    shine = (float)0.5;
-    /* convert phong_pow back into phong hilite angle. */
-    /* reciprocal of formula in libprm.c, lib_output_color() */
-    ang = (float)((180.0/(2.0*PI)) * acos( exp((-log(2.0))/phong_pow) ));
-    lib_output_color(NULL, acolor, ka, kd, ks, shine, ang, t, ior);
+    ks_spec = ks;
+    /* convert phong_pow back into phong hilight angle. */
+    /* reciprocal of formula in libpr1.c, lib_output_color() */
+	if ( phong_pow < 1.0 )
+		phong_pow = 1.0 ;
+    ang = (float)((180.0/PI) * acos( exp(log(0.5)/phong_pow) ));
+    lib_output_color(NULL, acolor, ka, kd, ks, ks_spec, ang, t, ior);
 	
 }
 
@@ -471,7 +473,7 @@ main(argc,argv)
 int argc ;
 char *argv[] ;
 {
-    char file_name[64];
+    char file_name[256];
     FILE *fp;
 	
     PLATFORM_INIT(SPD_READNFF);

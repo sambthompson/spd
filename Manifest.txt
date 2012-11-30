@@ -3,7 +3,7 @@ The SPD distribution contains the following files:
     Manifest.txt - what you are now reading
     Readme.txt - readme file for what the SPD is about
     NFF.txt - a description of the Neutral File Format used in the SPD
-    overview.htm - the web page at http://www.acm.org/tog/resources/SPD/
+    index.htm - the web page at http://www.acm.org/tog/resources/SPD/
 
     makefile - generic makefile (no display possible), same as null makefile
     makefile.dj  - IBM PC DJGPP+GRX makefile
@@ -58,5 +58,7 @@ The SPD distribution contains the following files:
     f117.dxf - sample DXF file; F117 plane
     f15.obj - sample Wavefront OBJ file; F15 plane
     skull.dxf - sample DXF file; skull
+
+	*.gif - thumbnail images of the databases
 
 [end]

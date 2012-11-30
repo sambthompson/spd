@@ -272,7 +272,7 @@ char *argv[];
 	
     /* set up crystal sphere color - clear white */
     SET_COORD3(obj_color, 1.0, 1.0, 1.0);
-    lib_output_color(NULL, obj_color, 0.0, 0.1, 0.1, 0.4, 5.0, 0.9, 1.5);
+    lib_output_color(NULL, obj_color, 0.0, 0.1, 0.1, 0.4, 6.7, 0.9, 1.5);
 	
     /* output crystal spheres */
     SET_COORD4(center, -0.8, 0.8, 1.00, 0.17);

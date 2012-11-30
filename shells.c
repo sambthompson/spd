@@ -215,7 +215,7 @@ char    *argv[] ;
 	
     /* set up sphere color */
     SET_COORD3( obj_color, 1.0, 0.8, 0.4 ) ;
-    lib_output_color( NULL, obj_color, 0.0, 0.8, 0.2, 0.5, 5.0, 0.0, 1.0 ) ;
+    lib_output_color( NULL, obj_color, 0.0, 0.8, 0.2, 0.5, 10.0, 0.0, 1.0 ) ;
 	
     steps = (long)(180.0 * pow( 2.0, (double)size_factor )) ;
     for ( i = -steps*2/3; i <= steps/3 ; ++i ) {

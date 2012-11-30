@@ -112,7 +112,7 @@ main(argc, argv)
 				
 				SET_COORD3(obj_color, 0.9, 0.9, 0.9);
 				lib_output_color(NULL, obj_color,
-					0.0, 0.5, 0.5, 50.0, 5.0, 0.0, 0.0);
+					0.0, 0.5, 0.5, 0.5, 37.0, 0.0, 0.0);
 				
 				SET_COORD4(center, x0, y0, z0, radius1);
 				lib_output_sphere(center, output_format);

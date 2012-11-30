@@ -421,6 +421,10 @@ char *p_infname;
 	
     num_arg = 0 ;
     *p_rdr = OUTPUT_NFF ;	/* default format if none given */
+
+	if ( p_infname != NULL ) {
+		*p_infname = (char)0 ;	/* default file name is empty */
+	}
 	
     while ( ++num_arg < argc ) {
 		if ( (*argv[num_arg] == '-') || (*argv[num_arg] == '/') ) {
@@ -475,6 +479,11 @@ char *p_infname;
 			return( TRUE ) ;
 		}
     }
+	if ( p_infname != NULL && *p_infname == (char)0 ) {
+		/* no file input, illegal */
+		show_read_usage();
+		return( TRUE ) ;
+	}
     return( FALSE ) ;
 }
 

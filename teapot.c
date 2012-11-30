@@ -504,7 +504,7 @@ COORD3	obj_color ;
 MATRIX	mst, g, mgm[3], tmtx ;
 
 SET_COORD3( obj_color, 1.0, 0.5, 0.1 ) ;
-lib_output_color(NULL, obj_color, 0.0, 0.75, 0.25, 0.25, 5.0, 0.0, 0.0 ) ;
+lib_output_color(NULL, obj_color, 0.0, 0.75, 0.25, 0.25, 37.0, 0.0, 0.0 ) ;
 
 lib_transpose_matrix( mst, ms ) ;
 
@@ -578,7 +578,7 @@ output_checkerboard()
 	COORD3	obj_color ;
 	
     SET_COORD3( obj_color, 1.0, 1.0, 1.0 ) ;
-    lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 15.0, 0.0, 0.0 ) ;
+    lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 30.0, 0.0, 0.0 ) ;
     for ( sstep = 0 ; sstep < size_factor ; sstep++ ) {
 		for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
 			if ( ( sstep + tstep ) % 2 ) {
@@ -589,7 +589,7 @@ output_checkerboard()
     }
 	
     SET_COORD3( obj_color, 0.5, 0.5, 0.5 ) ;
-    lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 15.0, 0.0, 0.0 ) ;
+    lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 30.0, 0.0, 0.0 ) ;
     for ( sstep = 0 ; sstep < size_factor ; sstep++ ) {
 		for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
 			if ( !(( sstep + tstep ) % 2) ) {

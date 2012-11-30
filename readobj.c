@@ -534,7 +534,7 @@ char *argv[];
 	
     /* output object color - light gray */
     SET_COORD3(dxf_color, 0.8, 0.8, 0.8);
-    lib_output_color(NULL, dxf_color, 0.1, 0.8, 0.0, 0.2, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, dxf_color, 0.1, 0.8, 0.0, 0.2, 10.0, 0.0, 1.0);
 	
     /*
 	 * For raytracers that don't scale the light intensity,

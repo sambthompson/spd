@@ -26,7 +26,8 @@
 
 static unsigned int hfcount = 0;
 
-/*-----------------------------------------------------------------*/
+/*-----------------------------------------------------------------*/\
+/* data is between -1.0 and 1.0, for y heightfield */
 #ifdef ANSI_FN_DEF
 static char * create_height_file(char *filename, int height, int width, float **data, int type)
 #else
@@ -38,7 +39,7 @@ int type;
 #endif
 {
     FILE *file;
-    float v;
+    double v;
     unsigned int i, j;
     unsigned char r, g, b;
     unsigned char tgaheader[18];
@@ -66,7 +67,7 @@ int type;
 		for (i=0;(int)i<height;i++) {
 			PLATFORM_MULTITASK();
 			for (j=0;(int)j<width;j++) {
-				v = data[i][j];
+				v = data[i][j]*128.0;
 				if (v < -128.0) v = -128.0;
 				if (v > 127.0) v = 127.0;
 				v += 128.0;
@@ -216,8 +217,8 @@ double z0, z1;
 			if (filename == NULL) return;
 			tab_indent();
 			fprintf(gOutfile, "object { height_field \"%s\" ", filename);
-			fprintf(gOutfile, "scale <%g, 1, %g> ",
-				fabs(x1-x0), fabs(z1-z0));
+			fprintf(gOutfile, "scale <%g, %g, %g> ",
+				fabs(x1-x0), fabs(y1-y0), fabs(z1-z0));
 			fprintf(gOutfile, "translate <%g, %g, %g> ", x0, y0, z0);
 			if (lib_tx_active())
 				lib_output_tx_sequence();
@@ -232,11 +233,11 @@ double z0, z1;
 			if (filename == NULL) return;
 			fprintf(gOutfile, "heightfield ");
 			if (gTexture_name != NULL)
-				fprintf(gOutfile, " %s", gTexture_name);
-			fprintf(gOutfile, "\"%s\" ", filename);
+				fprintf(gOutfile, "%s ", gTexture_name);
+			fprintf(gOutfile, "%s ", filename);	/* some versions may need quotes? */
 			fprintf(gOutfile, "rotate 1 0 0 90 ");
-			fprintf(gOutfile, "scale  %g 1 %g ",
-				fabs(x1 - x0), fabs(z1 - z0));
+			fprintf(gOutfile, "scale  %g %g %g ",
+				fabs(x1 - x0), fabs(y1 - y0), fabs(z1 - z0));
 			fprintf(gOutfile, "translate  %g %g %g ", x0, y0, z0);
 			if (lib_tx_active())
 				lib_output_tx_sequence();

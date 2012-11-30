@@ -253,7 +253,7 @@ dump_all_surfaces PARAMS((void))
 	
     while (temp_ptr != NULL) {
 		lib_output_color(temp_ptr->surf_name, temp_ptr->color, temp_ptr->ka,
-			temp_ptr->kd, temp_ptr->ks, temp_ptr->shine,
+			temp_ptr->kd, temp_ptr->ks, temp_ptr->ks_spec,
 			temp_ptr->ang, temp_ptr->kt, temp_ptr->ior);
 		temp_ptr = temp_ptr->next;
     }

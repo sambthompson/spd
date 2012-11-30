@@ -170,7 +170,7 @@ char *argv[];
 	lib_tx_rotate(X_AXIS,-30 * PI / 180.0);
 	lib_tx_rotate(Y_AXIS,-20 * PI / 180.0);
 	
-	lib_output_color(NULL, Pink, 0.1, 0.7, 0.7, 0.4, 10.0, 0.0, 1.0);
+	lib_output_color(NULL, Pink, 0.1, 0.7, 0.7, 0.4, 20.0, 0.0, 1.0);
 	make_rec_jack(1, size_factor);
 	
     /* Back to where we started */

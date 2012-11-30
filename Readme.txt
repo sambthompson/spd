@@ -1,7 +1,7 @@
 STANDARD PROCEDURAL DATABASES, by Eric Haines
 
 [Created while under contract to Hewlett-Packard FSD and HP Laboratories]
-Version 3.12, as of 10/1/98
+Version 3.13, as of 11/14/99
     address: Autodesk, 1050 Craft Road, Ithaca, NY 14850
     email: erich@acm.org
 
@@ -667,5 +667,17 @@ Version 3.12 released October, 1998 - added VRML 1.0 export by Aleksandar
     Vandewettering, POVRAY 3.0 export & ANSI headers & Mac fixes from Eduard
     Schwan, cleanup of indentation (4 spaces == tab now), VRML shading fixes,
     and consolidation and rewrite of READMEs.
+Version 3.13 released November, 1999 - Changed lib_output_color interface:
+    the "ang" code was off by a factor of 2. This means that if you call
+    the new lib_output_color with old code you will want to multiply your
+    input "ang" by 2 before passing it down. The database generators were
+    also changed to their original, 1987 specular power values, in terms of
+    the half-angle "ang". Changed documentation about "Shine" to be clearer
+    in the code ("Shine" is the amount the specular highlight contributes to
+    the surface), and cleaned up code comments. Fixed readnff.c (better
+    ks_spec value output) and libpr1.c (ang not set below 1.0 if 0.0 is
+    detected). Better VRML specular highlight output. Gears background color
+	made blue, to enhance visibility of transparent gears. Better command
+	line argument checking. Heightfield export improvement (I hope!).
 
 -end-

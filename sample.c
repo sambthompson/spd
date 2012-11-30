@@ -74,32 +74,32 @@ char *argv[];
     SET_COORD4(center, -10, 20, -20, 1.0);
     lib_output_light(center);
 	
-    lib_output_color(NULL, Cyan, 0.1, 0.7, 0.0, 0.7, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, Cyan, 0.1, 0.7, 0.0, 0.7, 10.0, 0.0, 1.0);
     SET_COORD3(center,-1, 0, 0);
     SET_COORD3(normal, 1, 1,-0.5);
     lib_output_torus(center, normal, 2.0, 0.5, output_format);
 	PLATFORM_PROGRESS(0, 0, 4);
 	
-    lib_output_color(NULL, Magenta, 0.1, 0.7, 0.0, 0.7, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, Magenta, 0.1, 0.7, 0.0, 0.7, 10.0, 0.0, 1.0);
     SET_COORD3(center, 0, 0, 0);
     SET_COORD3(normal, 0, 1,-0.5);
     lib_output_torus(center, normal, 2.0, 0.5, output_format);
 	PLATFORM_PROGRESS(0, 1, 4);
 	
-    lib_output_color(NULL, Yellow, 0.1, 0.7, 0.0, 0.7, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, Yellow, 0.1, 0.7, 0.0, 0.7, 10.0, 0.0, 1.0);
     SET_COORD3(center, 1, 0, 0);
     SET_COORD3(normal,-1, 1,-0.5);
     lib_output_torus(center, normal, 2.0, 0.5, output_format);
 	PLATFORM_PROGRESS(0, 2, 4);
 	
-    lib_output_color(NULL, Red, 0.1, 0.7, 0.0, 0.7, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, Red, 0.1, 0.7, 0.0, 0.7, 10.0, 0.0, 1.0);
     SET_COORD4(base, 0, -2, 0, 2);
     SET_COORD4(apex, 0,  2, 0, 0.1);
     lib_output_cylcone(base, apex, output_format);
 	PLATFORM_PROGRESS(0, 3, 4);
 	
     lib_set_polygonalization(4, 1);
-    lib_output_color(NULL, Red, 0.1, 0.7, 0.0, 0.7, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, Red, 0.1, 0.7, 0.0, 0.7, 10.0, 0.0, 1.0);
     SET_COORD3(base, 0, -2, 0);
     SET_COORD3(apex, 0,  1, 0);
     lib_output_disc(base, apex, 0.0, 4.0, output_format);

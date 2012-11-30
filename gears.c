@@ -149,9 +149,9 @@ char *argv[] ;
     }
 	/*      lib_set_polygonalization(3, 3); */
 	
-    /* output background color - black */
+    /* output background color - UNC sky blue */
     /* NOTE: Do this BEFORE lib_output_viewpoint(), for display_init() */
-    SET_COORD3(back_color, 0.0, 0.0, 0.0);
+    SET_COORD3(back_color, 0.078, 0.361, 0.753);
     lib_output_background_color(back_color);
 	
     /* output viewpoint */
@@ -184,7 +184,7 @@ char *argv[] ;
 	
     /* output ground polygon - off white */
     SET_COORD3(back_color, 1.0, 0.85, 0.7);
-    lib_output_color(NULL, back_color, 0.0, 0.3, 0.6, 0.3, 5.0, 0.0, 0.0);
+    lib_output_color(NULL, back_color, 0.0, 0.3, 0.6, 0.3, 37.0, 0.0, 0.0);
     SET_COORD3(ground[0],  2.0,  2.0, 0.0);
     SET_COORD3(ground[1], -2.0,  2.0, 0.0);
     SET_COORD3(ground[2], -2.0, -2.0, 0.0);

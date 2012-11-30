@@ -203,7 +203,7 @@ char *argv[] ;
 	
     /* set up object color - mirrored */
     SET_COORD3(obj_color, 1.0, 0.9, 0.7);
-    lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 5.0, 0.0, 1.0);
+    lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 37.0, 0.0, 1.0);
 	
     /* create set of spawned points */
     create_objset();
