@@ -10,7 +10,7 @@ OBJ	= o
 # DOS version:
 #SPDOBJS	= drv_ibm.$(OBJ) libini.$(OBJ) libinf.$(OBJ) libpr1.$(OBJ) libpr2.$(OBJ) libpr3.$(OBJ) libply.$(OBJ) libdmp.$(OBJ) libvec.$(OBJ) libtx.$(OBJ)
 # other versions...
-SPDOBJS	= libini.$(OBJ) libinf.$(OBJ) libpr1.$(OBJ) libpr2.$(OBJ) libpr3.$(OBJ) libply.$(OBJ) libdmp.$(OBJ) libvec.$(OBJ) libtx.$(OBJ)
+SPDOBJS	= drv_null.$(OBJ) libini.$(OBJ) libinf.$(OBJ) libpr1.$(OBJ) libpr2.$(OBJ) libpr3.$(OBJ) libply.$(OBJ) libdmp.$(OBJ) libvec.$(OBJ) libtx.$(OBJ)
 
 # Zortech specific graphics library
 #LIBFILES=fg.lib
@@ -19,7 +19,9 @@ LIBFILES=-lm
 
 all:	balls.$(EXE) gears.$(EXE) mount.$(EXE) rings.$(EXE) teapot.$(EXE) \
 	tetra.$(EXE) tree.$(EXE) \
-	sample.$(EXE) lattice.$(EXE) shells.$(EXE) jacks.$(EXE)
+	readdxf.$(EXE) readnff.$(EXE) readobj.$(EXE) \
+	sample.$(EXE) lattice.$(EXE) shells.$(EXE) jacks.$(EXE) \
+	sombrero.$(EXE) nurbtst.$(EXE)
 
 # Rule to compile c progs into obj's
 .c.$(OBJ):
@@ -27,6 +29,8 @@ all:	balls.$(EXE) gears.$(EXE) mount.$(EXE) rings.$(EXE) teapot.$(EXE) \
 
 # DOS only
 #drv_ibm.$(OBJ):	drv_ibm.c drv.h def.h
+
+drv_null.$(OBJ):	drv_null.c drv.h def.h
 
 libini.$(OBJ): libini.c lib.h libvec.h drv.h
 
@@ -73,6 +77,9 @@ readdxf.$(EXE):	readdxf.$(OBJ) $(SPDOBJS)
 readnff.$(EXE):	readnff.$(OBJ) $(SPDOBJS)
 	$(CC) $(CFLAGS) readnff.$(OBJ) $(SPDOBJS) $(LIBFILES)
 
+readobj.$(EXE):	readobj.$(OBJ) $(SPDOBJS)
+	$(CC) $(CFLAGS) readobj.$(OBJ) $(SPDOBJS) $(LIBFILES)
+
 sample.$(EXE):	sample.$(OBJ) $(SPDOBJS)
 	$(CC) $(CFLAGS) sample.$(OBJ) $(SPDOBJS) $(LIBFILES)
 
@@ -84,3 +91,9 @@ shells.$(EXE):	shells.$(OBJ) $(SPDOBJS)
 
 jacks.$(EXE):	jacks.$(OBJ) $(SPDOBJS)
 	$(CC) $(CFLAGS) jacks.$(OBJ) $(SPDOBJS) $(LIBFILES)
+
+sombrero.$(EXE): sombrero.$(OBJ) $(SPDOBJS)
+	$(CC) $(CFLAGS) sombrero.$(OBJ) $(SPDOBJS) $(LIBFILES)
+
+nurbtst.$(EXE):	nurbtst.$(OBJ) $(SPDOBJS)
+	$(CC) $(CFLAGS) nurbtst.$(OBJ) $(SPDOBJS) $(LIBFILES)

@@ -38,10 +38,9 @@ Comments, suggestions, and criticisms are all welcome.
 
 At present the NFF file format is used in conjunction with the SPD (Standard
 Procedural Database) software, a package designed to create a variety of
-databases for testing rendering schemes.  The SPD package is available
-from Netlib and via ftp from drizzle.cs.uoregon.edu.  For more information
-about SPD see "A Proposal for Standard Graphics Environments," IEEE Computer
-Graphics and Applications, vol. 7, no. 11, November 1987, pp. 3-5.
+databases for testing rendering schemes.  For more information about SPD see
+"A Proposal for Standard Graphics Environments," IEEE Computer Graphics and
+Applications, vol. 7, no. 11, November 1987, pp. 3-5.
 
 By providing a minimal interface, NFF is meant to act as a simple format to
 allow the programmer to quickly write filters to move from NFF to the
@@ -82,7 +81,7 @@ int	argc;
 char	*argv[];
 {
 	int	i;
-
+	
 	progname = argv[0];
 	for (i = 1; i < argc; i++)
 		if (argc-i > 1 && !strcmp(argv[i], "-vf"))
@@ -91,18 +90,18 @@ char	*argv[];
 			goto userr;
 		else
 			break;
-	if (argc-i > 1)
-		goto userr;
-	if (argc-i == 1 && freopen(argv[i], "r", stdin) == NULL) {
-		perror(argv[i]);
-		exit(1);
-	}
-	init();
-	nff2rad();
-	exit(0);
+		if (argc-i > 1)
+			goto userr;
+		if (argc-i == 1 && freopen(argv[i], "r", stdin) == NULL) {
+			perror(argv[i]);
+			exit(1);
+		}
+		init();
+		nff2rad();
+		exit(0);
 userr:
-	fprintf(stderr, "Usage: %s [-vf viewfile] [input]\n", progname);
-	exit(1);
+		fprintf(stderr, "Usage: %s [-vf viewfile] [input]\n", progname);
+		exit(1);
 }
 
 
@@ -119,7 +118,7 @@ init()			/* spit out initial definitions */
 nff2rad()		/* convert NFF on stdin to Radiance on stdout */
 {
 	register int	c;
-
+	
 	while ((c = getchar()) != EOF)
 		switch (c) {
 		case ' ':			/* white space */
@@ -155,27 +154,27 @@ nff2rad()		/* convert NFF on stdin to Radiance on stdout */
 		default:			/* unknown */
 			fprintf(stderr, "%c: unknown NFF primitive\n", c);
 			exit(1);
-		}
+	}
 }
 
 
 /*******************************************
 
-Comment.  Description:
-    "#" [ string ]
-
-Format:
-    # [ string ]
-
-    As soon as a "#" character is detected, the rest of the line is considered
-    a comment.
-
+ Comment.  Description:
+ "#" [ string ]
+ 
+  Format:
+  # [ string ]
+  
+   As soon as a "#" character is detected, the rest of the line is considered
+   a comment.
+   
 ******************/
 
 comment()
 {
 	register int	c;
-
+	
 	putchar('#');
 	while ((c = getchar()) != EOF) {
 		putchar(c);
@@ -233,7 +232,7 @@ view()
 {
 	static FILE	*fp = NULL;
 	float	from[3], at[3], up[3], angle;
-
+	
 	if (scanf(" from %f %f %f", &from[0], &from[1], &from[2]) != 3)
 		goto fmterr;
 	if (scanf(" at %f %f %f", &at[0], &at[1], &at[2]) != 3)
@@ -250,11 +249,11 @@ view()
 			exit(1);
 		}
 		fprintf(fp,
-	"VIEW= -vp %g %g %g -vd %g %g %g -vu %g %g %g -vh %g -vv %g\n",
-				from[0], from[1], from[2],
-				at[0]-from[0], at[1]-from[1], at[2]-from[2],
-				up[0], up[1], up[2],
-				angle, angle);
+			"VIEW= -vp %g %g %g -vd %g %g %g -vu %g %g %g -vh %g -vv %g\n",
+			from[0], from[1], from[2],
+			at[0]-from[0], at[1]-from[1], at[2]-from[2],
+			up[0], up[1], up[2],
+			angle, angle);
 	}
 	return;
 fmterr:
@@ -283,10 +282,10 @@ light()
 	static int	nlights = 0;
 	register int	c;
 	float	x, y, z;
-
+	
 	if (scanf("%f %f %f",&x, &y, &z) != 3) {
-	    fprintf(stderr, "%s: light source syntax error\n", progname);
-	    exit(1);
+		fprintf(stderr, "%s: light source syntax error\n", progname);
+		exit(1);
 	}
 	while ((c = getchar()) != EOF && c != '\n')
 		;
@@ -312,18 +311,18 @@ background()
 	float	r, g, b;
 	char colname[50];
 	double cvec[3];
-
+	
 	if (scanf("%s", colname) != 1) {
-	    fprintf(stderr,"%s: background syntax error\n",progname);exit(1);
+		fprintf(stderr,"%s: background syntax error\n",progname);exit(1);
 	}
 	if(LookupColorByName(colname,cvec)==1){
-	    r=cvec[0];g=cvec[1];b=cvec[2];
-	}else{
-	    if(sscanf(colname,"%f",&r)!=1 ||
-	       scanf("%f %f", &g, &b) !=2) {
-		fprintf(stderr, "%s: background syntax error\n", progname);
-		exit(1);
-	    }
+		r=cvec[0];g=cvec[1];b=cvec[2];
+	} else {
+		if(sscanf(colname,"%f",&r)!=1 ||
+			scanf("%f %f", &g, &b) !=2) {
+			fprintf(stderr, "%s: background syntax error\n", progname);
+			exit(1);
+		}
 	}
 	printf("\nvoid glow backg_color\n");
 	printf("0\n0\n4 %g %g %g 0\n", r, g, b);
@@ -359,18 +358,18 @@ fill()
 	float	r, g, b, d, s, p, t, n;
 	char colname[50];
 	double cvec[3];
-
+	
 	if (scanf("%s", colname) != 1) {
-	    fprintf(stderr,"%s: fill syntax error\n",progname);exit(1);
+		fprintf(stderr,"%s: fill syntax error\n",progname);exit(1);
 	}
 	if(LookupColorByName(colname,cvec)==1){
-	    r=cvec[0];g=cvec[1];b=cvec[2];
+		r=cvec[0];g=cvec[1];b=cvec[2];
 	}else{
-	    if(sscanf(colname,"%f",&r)!=1 ||
-	       scanf("%f %f", &g, &b) !=2) {
-		fprintf(stderr, "%s: fill syntax error\n", progname);
-		exit(1);
-	    }
+		if(sscanf(colname,"%f",&r)!=1 ||
+			scanf("%f %f", &g, &b) !=2) {
+			fprintf(stderr, "%s: fill syntax error\n", progname);
+			exit(1);
+		}
 	}
 	if (scanf("%f %f %f %f %f", &d, &s, &p, &t, &n) != 5) {
 		fprintf(stderr, "%s: fill material syntax error\n", progname);
@@ -385,7 +384,7 @@ fill()
 		} else {		/* transmits w/o refraction */
 			printf("\nvoid trans fill\n");
 			printf("0\n0\n7 %g %g %g %g 0 %g 1\n",
-					r*d, g*d, b*d, s, t);
+				r*d, g*d, b*d, s, t);
 		}
 	} else {		/* no transmission */
 		printf("\nvoid plastic fill\n");
@@ -424,11 +423,11 @@ cone()
 	static int	ncs = 0;
 	int	invert;
 	float	x0, y0, z0, x1, y1, z1, r0, r1;
-
+	
 	if (scanf("%f %f %f %f %f %f %f %f", &x0, &y0, &z0, &r0,
-			&x1, &y1, &z1, &r1) != 8) {
+		&x1, &y1, &z1, &r1) != 8) {
 		fprintf(stderr, "%s: cylinder or cone syntax error\n",
-				progname);
+			progname);
 		exit(1);
 	}
 	if (invert = r0 < 0.) {
@@ -468,7 +467,7 @@ sphere()
 {
 	static int	nspheres = 0;
 	float	x, y, z, r;
-
+	
 	if (scanf("%f %f %f %f", &x, &y, &z, &r) != 4) {
 		fprintf(stderr, "%s: sphere syntax error\n", progname);
 		exit(1);
@@ -525,7 +524,7 @@ poly()
 	int	ispatch;
 	int	nverts;
 	float	x, y, z;
-
+	
 	ispatch = getchar();
 	if (ispatch != 'p') {
 		ungetc(ispatch, stdin);
@@ -1332,15 +1331,15 @@ ColorEntry Colors[] = {
 
 int
 LookupColorByName(name, color)
- char * name ;
- Vec color ;
+char * name ;
+Vec color ;
 {
 	int rc ;
 	rc = BinarySearch(name, 0, NCOLORS - 1 , Colors) ;
 	if (rc < 0) {
 		return(0) ;
 	}
-
+	
 	VecCopy(Colors[rc].ce_color, color) ;
 	return 1 ;
 }
@@ -1348,16 +1347,16 @@ LookupColorByName(name, color)
 
 int
 BinarySearch(name, l, h, array)
- char * name ;
- int l, h ;
- ColorEntry array[] ;
+char * name ;
+int l, h ;
+ColorEntry array[] ;
 {
 	int m, rc ;
 	if (l > h)
 		return(-1) ;
-
+	
 	m = (l + h) / 2 ;
-
+	
 	rc = strcmp(name, array[m].ce_name) ;
 	if (rc == 0)
 		return m ;

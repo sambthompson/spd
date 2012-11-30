@@ -1,4 +1,4 @@
-/* drvr_zrtc.c - Zortech Flash Graphics specific version of display routines. */
+/* drvr_dos.c - DOS driver file (for use with gcc) */
 
 /*
  * Modified: 17 Mar 1993
@@ -49,8 +49,8 @@ static quantized_color black1 = {1, {0, 0, 0}};
 static quantized_color black2 = {2, {0, 0, 0}};
 static quantized_color black3 = {3, {0, 0, 0}};
 
-int Pallette_Start = 0;      /* Pallette entries start at 0 */
-int Pallette_Flag = 1;       /* Use 884 pallette */
+int Palette_Start = 0;      /* Palette entries start at 0 */
+int Palette_Flag = 1;       /* Use 884 palette */
 int Display_Flag = 3;        /* Use 800x600 256 color VESA mode */
 int Reset_Display_Flag = 1;  /* Turn on the requested video mode */
 
@@ -110,8 +110,8 @@ static unsigned screen_maxx = 800;
 static unsigned screen_maxy = 600;
 static unsigned long granularity = 65536;
 
-typedef unsigned char pallette_array[256][3];
-static pallette_array *pallette = NULL;
+typedef unsigned char palette_array[256][3];
+static palette_array *palette = NULL;
 
 static int EGA_colors[16][3] =
    {{  0,  0,  0}, {  0,  0,255}, {  0,255,  0}, {  0,127,127},
@@ -280,7 +280,7 @@ setvesamode(int mode, int clear)
       }
 }
 
-/* Set a 256 entry pallette with the values given in "palbuf". */
+/* Set a 256 entry palette with the values given in "palbuf". */
 static void
 setmany(unsigned char palbuf[256][3], int start, int count)
 {
@@ -294,16 +294,16 @@ setmany(unsigned char palbuf[256][3], int start, int count)
       }
 }
 
-/* Make space for a pallette & make a 332 color map */
+/* Make space for a palette & make a 332 color map */
 static void
-pallette_init()
+palette_init()
 {
     unsigned i, r, g, b;
 
-    if (pallette == NULL) {
-	pallette = malloc(sizeof(pallette_array));
-	if (pallette == NULL) {
-	    fprintf(stderr, "Failed to allocate pallette array\n");
+    if (palette == NULL) {
+	palette = malloc(sizeof(palette_array));
+	if (palette == NULL) {
+	    fprintf(stderr, "Failed to allocate palette array\n");
 	    exit(1);
 	}
     }
@@ -312,12 +312,12 @@ pallette_init()
     for (r=0;r<8;r++)
 	for (g=0;g<8;g++)
 	    for (b=0;b<4;b++) {
-	       (*pallette)[i][0] = r << 3;
-	       (*pallette)[i][1] = g << 3;
-	       (*pallette)[i][2] = b << 4;
+	       (*palette)[i][0] = r << 3;
+	       (*palette)[i][1] = g << 3;
+	       (*palette)[i][2] = b << 4;
 	       i++;
 	    }
-    setmany(*pallette, 0, 256);
+    setmany(*palette, 0, 256);
 }
 
 static void
@@ -381,12 +381,12 @@ quantize(color, qcolor)
        Display_Flag <  FIRST_4BIT_MODE + VIDEO_RESOLUTIONS) {
       qcolor->bytes = 1;
       quantize_4bit(color, qcolor);
-      qcolor->byte[0] += Pallette_Start;
+      qcolor->byte[0] += Palette_Start;
       }
    else if (Display_Flag >= FIRST_8BIT_MODE &&
        Display_Flag <  FIRST_8BIT_MODE + VIDEO_RESOLUTIONS) {
       qcolor->bytes = 1;
-      switch (Pallette_Flag) {
+      switch (Palette_Flag) {
       case 3:
 	 quantize_4bit(color, qcolor);
 	 break;
@@ -402,7 +402,7 @@ quantize(color, qcolor)
 	 /* Greyscale */
 	 qcolor->byte[0] = (r>g?(r>b?r>>2:b>>2):(g>b?g>>2:b>>2));
 	 }
-      qcolor->byte[0] += Pallette_Start;
+      qcolor->byte[0] += Palette_Start;
       }
    else if (Display_Flag >= FIRST_HICOLOR_MODE &&
 	    Display_Flag <  FIRST_HICOLOR_MODE + VIDEO_RESOLUTIONS) {
@@ -597,25 +597,25 @@ display_init(xres, yres, bk_color)
 	 case FIRST_8BIT_MODE+4:
 	    if (setvesamode(0x107, 0)) {
 	       Display_Flag = FIRST_8BIT_MODE+4;
-	       pallette_init();
+	       palette_init();
 	       break;
 	       }
 	 case FIRST_8BIT_MODE+3:
 	    if (setvesamode(0x105, 0)) {
 	       Display_Flag = FIRST_8BIT_MODE+3;
-	       pallette_init();
+	       palette_init();
 	       break;
 	       }
 	 case FIRST_8BIT_MODE+2:
 	    if (setvesamode(0x103, 0)) {
 	       Display_Flag = FIRST_8BIT_MODE+2;
-	       pallette_init();
+	       palette_init();
 	       break;
 	       }
 	 case FIRST_8BIT_MODE+1:
 	    if (setvesamode(0x101, 0)) {
 	       Display_Flag = FIRST_8BIT_MODE+1;
-	       pallette_init();
+	       palette_init();
 	       break;
 	       }
 	 case FIRST_8BIT_MODE:
@@ -623,14 +623,14 @@ display_init(xres, yres, bk_color)
 	    screen_maxx = 320;
 	    screen_maxy = 200;
 	    Display_Flag = FIRST_8BIT_MODE;
-	    pallette_init();
+	    palette_init();
 	    break;
 
 	 case FIRST_4BIT_MODE+1:
 	    setvideomode(18);
 	    screen_maxx = 640;
 	    screen_maxy = 480;
-	    Pallette_Flag = 3; /* Must be 4 bit pallette */
+	    Palette_Flag = 3; /* Must be 4 bit palette */
 	    Display_Flag = FIRST_4BIT_MODE+1;
 	    break;
 
@@ -638,7 +638,7 @@ display_init(xres, yres, bk_color)
 	    setvideomode(13);
 	    screen_maxx = 320;
 	    screen_maxy = 200;
-	    Pallette_Flag = 3; /* Must be 4 bit pallette */
+	    Palette_Flag = 3; /* Must be 4 bit palette */
 	    Display_Flag = FIRST_4BIT_MODE;
 	    break;
 
@@ -703,9 +703,9 @@ display_close(int wait_flag)
       if (!getch()) getch();
       }
 
-   if (pallette != NULL) {
-      free(pallette);
-      pallette = NULL;
+   if (palette != NULL) {
+      free(palette);
+      palette = NULL;
       }
 
    /* Go back to standard text mode */

@@ -9,8 +9,9 @@ INC=def.h lib.h
 LIBOBJ=drv_ibm$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) libvec$(SUFOBJ) libtx$(SUFOBJ)
 BASELIB=-lgrx -lm
 
-all:		balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells jacks
+all:		balls gears mount rings teapot tetra tree \
+		readdxf readnff readobj \
+		sample lattice shells jacks sombrero nurbtst
 
 drv_ibm$(SUFOBJ):	$(INC) drv_ibm.c drv.h
 		$(CC) -DGRX -c drv_ibm.c
@@ -87,6 +88,11 @@ readnff$(EXE):		$(LIBOBJ) readnff.c
 		aout2exe $*
 		@del $* >nul
 
+readobj$(EXE):		$(LIBOBJ) readobj.c
+		$(CC) -o readobj$(EXE) readobj.c $(LIBOBJ) $(BASELIB)
+		aout2exe $*
+		@del $* >nul
+
 sample$(EXE):		$(LIBOBJ) sample.c
 		$(CC) -o sample$(EXE) sample.c $(LIBOBJ) $(BASELIB)
 		aout2exe $*
@@ -107,6 +113,16 @@ jacks$(EXE):		$(LIBOBJ) jacks.c
 		aout2exe $*
 		@del $* >nul
 
+sombrero$(EXE):		$(LIBOBJ) sombrero.c
+		$(CC) -o sombrero$(EXE) sombrero.c $(LIBOBJ) $(BASELIB)
+		aout2exe $*
+		@del $* >nul
+
+nurbtst$(EXE):		$(LIBOBJ) nurbtst.c
+		$(CC) -o nurbtst$(EXE) nurbtst.c $(LIBOBJ) $(BASELIB)
+		aout2exe $*
+		@del $* >nul
+
 clean:
 		@del balls.exe >nul
 		@del gears.exe >nul
@@ -117,9 +133,12 @@ clean:
 		@del tree.exe >nul
 		@del readdxf.exe >nul
 		@del readnff.exe >nul
+		@del readobj.exe >nul
 		@del sample.exe >nul
 		@del lattice.exe >nul
 		@del shells.exe >nul
 		@del jacks.exe >nul
+		@del sombrero.exe >nul
+		@del nurbtst.exe >nul
 		@del *.o >nul
 		@echo Clean done.

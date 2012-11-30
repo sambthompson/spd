@@ -4,11 +4,11 @@ Project:	SPD
 File:	drv_mac.c
 
 Description:
-Mac-specific code for initialization & displaying.
+Mac-specific code for initialization & displaying command-line options & output window.
 ------------------------------------------------------------------------------
 Author:
 	Alexander Enzmann, [70323,2461]
-	Eduard Schwan, [71513,2161]
+	Eduard Schwan, [espsw@compuserve.com]
 ------------------------------------------------------------------------------
 Change History:
 	9212??	[ae]	Created.
@@ -23,6 +23,9 @@ Change History:
 	930918	[esp]	Fixed up logic for input parm prompting.
 	930918	[esp]	Added grody quick fix to redraw please-wait dlg on switchin.
 	940725	[esp]	Removed special palette, use System palette to avoid Finder color snatching
+	950422	[esp]	Changed popup menu handling to simpler System 7-only control style
+	970421	[esp]	Updated to CW11 Universal interfaces
+	980102	[esp]	Fixed argv/argc bug which was stomping on memory, updated to CWC Pro 2
 ==============================================================================*/
 
 #include <stdio.h>		/* sprintf, etc */
@@ -30,22 +33,22 @@ Change History:
 
 /*==== Macintosh-specific headers ====*/
 #include <Controls.h>
-#include <Desk.h>
 #include <Dialogs.h>
 #include <Files.h>
-#include <Memory.h>			/* BlockMove */
+// Note: Memory.h & Windows.h have been renamed by Apple in Univ. Headers 3!
+#include <MacMemory.h>			/* BlockMove */
+#include <MacWindows.h>
 #include <Menus.h>
-#include <OSEvents.h>
+#include <Events.h>
 #include <OSUtils.h>
 #include <Packages.h>
 #include <QuickDraw.h>
 #include <Palettes.h>
 #include <Resources.h>
 #include <Types.h>
-#include <Windows.h>
 #include <sound.h>
 #include <AppleEvents.h>
-#include <GestaltEqu.h>
+#include <Gestalt.h>
 #include <Folders.h>
 #include <errors.h>			/* dupFNErr, etc */
 #include <Fonts.h>			/* checkMark */
@@ -63,20 +66,15 @@ Change History:
 #include "drv.h"
 #include "lib.h"		/* for output types */
 
-/*------------------------------------------------------------*/
-/* These #defines map MPW C names into their Think C equivalent */
-#ifdef THINK_C
-// <esp>
-// #define	c2pstr	CtoPstr
-// #define	p2cstr	PtoCstr
-#endif THINK_C
 
-#define	kOSEvent				app4Evt	/* event used by MultiFinder */
+/*------------------------------------------------------------*/
 #define	kSuspendResumeMessage	1		/* high byte of suspend/resume event message */
 
 #define kMouseCursorID 1000	// mouse cursor resource ID
 
-/* #define	USE_CUSTOM_PALETTE		1		/* turn on to attach special palette */
+/* turn on to attach special palette */
+/* #define	USE_CUSTOM_PALETTE		1
+
 
 /*------------------------------------------------------------*/
 // constants for positioning the default popup item within its box
@@ -91,31 +89,58 @@ Change History:
 #define	DlogID_GETOPTS		2000
 
 // # of lines or pixels to draw between multitask calls
-#define	MAX_TASK_WAIT	50
+#define	MAX_TASK_WAIT	20
 
-typedef struct
-{
-	MenuHandle	fMenuHandle;	// our popUp menu
-	short		fMenuID;		// our popUp menu ID
-	DialogPtr	fParentDialog;	// our dialog pointer
-	short		fPopupItemID;	// our popUp dialog user item ID
-	Rect		fPopupBounds;	// boundsrect of popup menu
-	short		fTitleItemID;	// our popUp title user item ID
-	Rect		fTitleBounds;	// boundsrect of our popUp's title box
-	short		fLastChoice;	// the last-chosen item from the pop-up menu
-} popupMenuRec_t, *popupMenuPtr_t, **popupMenuHdl_t;
+
 
 /*------------------------------------------------------------*/
-short		gMacRayTracerKind = OUTPUT_RT_DEFAULT;
+#define kDEFAULT_MAC_RT		OUTPUT_POVRAY_30
+short		gMacRayTracerKind = kDEFAULT_MAC_RT;
 short		gMacParmSize = 2;
 Boolean		gMacDoBuiltIn = true;	/* TRUE= OUTPUT_CURVES, FALSE = OUTPUT_PATCHES */
 char		gInFileName[64];
 
 /*------------------------------------------------------------*/
+typedef struct SPDFileInfoRec
+{
+	OSType		fdType;
+	OSType		fdCreator;
+} SPDFileInfoRec;
+
+#define	kDefaultCreator		'CWIE'
+#define	k3DMFFileType		'3DMF'
+
+static SPDFileInfoRec	gFileInfo[] =
+{
+	{0L, 0L},						// OUTPUT_VIDEO
+	{'TEXT', kDefaultCreator},		// OUTPUT_NFF
+	{'TEXT', kDefaultCreator},		// OUTPUT_POVRAY_10
+	{'TEXT', 'PvRy'},				// OUTPUT_POVRAY_20
+	{'TEXT', 'POV3'},				// OUTPUT_POVRAY_30
+	{'TEXT', kDefaultCreator},		// OUTPUT_POLYRAY
+	{'TEXT', kDefaultCreator},		// OUTPUT_VIVID
+	{'TEXT', kDefaultCreator},		// OUTPUT_QRT
+	{'TEXT', kDefaultCreator},		// OUTPUT_RAYSHADE
+	{'TEXT', kDefaultCreator},		// OUTPUT_RTRACE
+	{'TEXT', kDefaultCreator},		// OUTPUT_PLG
+	{'TEXT', kDefaultCreator},		// OUTPUT_RAWTRI
+	{'TEXT', kDefaultCreator},		// OUTPUT_ART
+	{'TEXT', kDefaultCreator},		// OUTPUT_RIB
+	{'TEXT', kDefaultCreator},		// OUTPUT_DXF
+	{'TEXT', kDefaultCreator},		// OUTPUT_OBJ
+	{'TEXT', kDefaultCreator},		// OUTPUT_RWX
+	{k3DMFFileType, 'ttxt'},		// OUTPUT_3DMF
+	{'TEXT', kDefaultCreator},		// OUTPUT_VRML2
+	{'TEXT', kDefaultCreator}		// OUTPUT_DELAYED
+};
+
+/*------------------------------------------------------------*/
 static WindowPtr	myWindow;
+
 #if defined(USE_CUSTOM_PALETTE)
 static PaletteHandle PolyPalette;
 #endif
+
 static int			maxx = 460;
 static int			maxy = 300;
 static int			gMultiTaskCount = 0;
@@ -135,182 +160,14 @@ static char			*macArgv[] =	{NULL, NULL, NULL, NULL, NULL,
 									NULL, NULL, NULL, NULL, NULL};
 static char			macArgvBuffer[200];		// fake argc/argv
 static char			*argvCurrent;
-static popupMenuRec_t	gPopupRec;
+
 
 /*------------------------------------------------------------*/
 void MacMultiTask();
 
 
-static void DrawDownTriangle(register short h, register short v)
-{
-	register short i;
-
-	for (i = 0; i < 6; ++i)	{
-		MoveTo(h + 5 - i, v - i);
-		Line(2*i, 0);
-	}
-}
-
-
 /*------------------------------------------------------------*/
-// Draw the popup menu (called by Dialog Mgr for updates, and by our filterproc)
-static pascal void DrawPopupMenu(DialogPtr pDialogPtr, short pItem)
-{
-#pragma unused (pItem, pDialogPtr)
-	short		newWid, newLen, wid;
-	PenState	savePen;
-	Rect		aRect;
-	Str255		theItemText;
-	FontInfo	fontInfo;
-
-	SetPort(pDialogPtr);
-
-	GetPenState(&savePen);
-	GetFontInfo(&fontInfo);
-
-	// get currently-selected item text
-	GetItem(gPopupRec.fMenuHandle, gPopupRec.fLastChoice, theItemText);
-
-	// get the menu bounds
-	aRect = gPopupRec.fPopupBounds;
-	InsetRect(&aRect, -1, -1); // make it a little bigger
-
-	// Insure that the item fits. Truncate it and add an ellipses (".") if it doesn't
-	wid = (aRect.right-aRect.left) - (CharWidth(checkMark)+SLOP_RIGHT+4); // available string area
-	newWid = StringWidth(theItemText); // get current width
-	if (newWid > wid)
-	{	// doesn't fit - truncate it
-		newLen = theItemText[0]; // current length in characters
-		wid = wid - CharWidth('É'); // subtract width of ellipses
-
-		do	{ // until it fits (or we run out of characters)
-			// drop the last character and its width
-			newWid -= CharWidth(theItemText[newLen]);
-			newLen--;
-		} while ((newWid > wid) && (newLen > 0));
-
-		// add the ellipses character
-		newLen++; // add room for elipsis character
-		theItemText[newLen] = 'É';
-		theItemText[0] = newLen; // set the new true length
-	}
-
-	// draw the box
-	PenSize(1, 1);
-	FrameRect(&aRect);
-	// and its drop shadow
-	MoveTo(aRect.right, aRect.top+2);
-	LineTo(aRect.right, aRect.bottom);
-	LineTo(aRect.left+2, aRect.bottom);
-
-	// draw the string
-	MoveTo(aRect.left+CharWidth(checkMark)+2, aRect.top+fontInfo.ascent);
-	DrawString(theItemText);
-
-	DrawDownTriangle(aRect.right-SLOP_RIGHT-1, aRect.top+fontInfo.ascent);
-
-	SetPenState(&savePen);
-} // DrawPopupMenu
-
-
-/*------------------------------------------------------------*/
-// Initialize the popup menu/dialog record, returns true if successful
-Boolean IPopupMenu(DialogPtr pDialogPtr, short pMenuID, short pTitleItemID, short pPopupItemID,
-				short pCurrentChoice)
-{
-	Handle		theItem;
-	short		theItemType;
-	Boolean		returnValue;
-
-	returnValue = false;
-	gPopupRec.fMenuHandle	= GetMenu(pMenuID);		// our popUp menu
-	if ((gPopupRec.fMenuHandle != NULL) && (pDialogPtr != NULL))
-	{
-		gPopupRec.fMenuID		= pMenuID;			// our popUp menu ID
-		gPopupRec.fParentDialog	= pDialogPtr;		// our dialog pointer
-		gPopupRec.fPopupItemID	= pPopupItemID;		// our popUp dialog user item ID
-		gPopupRec.fTitleItemID	= pTitleItemID;		// our popUp title user item ID
-
-		gPopupRec.fLastChoice	= pCurrentChoice;	// the last-chosen item from the pop-up menu
-		SetItemMark(gPopupRec.fMenuHandle, pCurrentChoice, checkMark); // check this item
-
-		GetDItem(pDialogPtr, pTitleItemID, &theItemType, &theItem, &gPopupRec.fTitleBounds); // boundsrect of our popUp's title box
-		GetDItem(pDialogPtr, pPopupItemID, &theItemType, &theItem, &gPopupRec.fPopupBounds); // boundsrect of its prompt
-		CalcMenuSize(gPopupRec.fMenuHandle);
-		// install our Draw proc (DrawPopupMenu)
-		SetDItem(pDialogPtr, pPopupItemID, theItemType, (Handle)DrawPopupMenu, &gPopupRec.fPopupBounds); // boundsrect of its prompt
-		returnValue = true;
-	}
-	return returnValue;
-} // IPopupMenu
-
-
-/*------------------------------------------------------------*/
-// Filterproc for popup userItem hits on mouse down (call from your dialog filter proc)
-pascal Boolean PopupMouseDnDialogFilterProc(DialogPtr pDialogPtr, EventRecord *pEventPtr, short *pItemHitPtr)
-{
-Point	mouseLoc, popLoc;
-short	newChoice, theItem;
-long	chosen;
-Boolean	myFilter;
-
-	// pre-initialize return values
-	*pItemHitPtr = 0;
-	myFilter = false;
-
-	if (pEventPtr->what == mouseDown)
-	{
-		SetPort(pDialogPtr);
-
-		mouseLoc = pEventPtr->where; // copy the mouse position
-		GlobalToLocal(&mouseLoc); // convert it to local dialog coordinates
-
-		// Was the click in a popup item?  NOTE: FindDItem is zero-based!
-		theItem = FindDItem(pDialogPtr, mouseLoc);
-		if ((theItem + 1) == gPopupRec.fPopupItemID)
-		{
-			// We're going to pop up our menu. Insert our menu into the menu list,
-			// then call CalcMenuSize (to work around a bug in the Menu Manager),
-			// then call PopUpMenuSelect and let the user drag around. Note that the
-			// (top,left) parameters to PopUpMenuSelect are our item's, converted to
-			// global coordinates.
-			InvertRect(&gPopupRec.fTitleBounds); // hilight the title
-			InsertMenu(gPopupRec.fMenuHandle, -1); // insert our menu in the menu list
-			popLoc = *(Point*)(&gPopupRec.fPopupBounds.top); // copy our item's topleft
-			LocalToGlobal(&popLoc); // convert back to global coords
-			CalcMenuSize(gPopupRec.fMenuHandle); // Work around Menu Mgr bug
-			chosen = PopUpMenuSelect(gPopupRec.fMenuHandle,
-							popLoc.v, popLoc.h, gPopupRec.fLastChoice);
-			DeleteMenu(gPopupRec.fMenuID); // Remove our menu from the menu list
-			InvertRect(&gPopupRec.fTitleBounds); // unhilight the title
-
-			// Was something chosen?
-			if (chosen)
-			{
-				// get the chosen item number
-				newChoice = chosen & 0x0000ffff;
-				if (newChoice != gPopupRec.fLastChoice)
-				{
-					// the user chose an item other than the current one
-					SetItemMark(gPopupRec.fMenuHandle, gPopupRec.fLastChoice, noMark); // unmark the old choice
-					SetItemMark(gPopupRec.fMenuHandle, newChoice, checkMark); // mark the new choice
-					gPopupRec.fLastChoice = newChoice; // update the current choice
-
-					// Draw the new title
-					EraseRect(&gPopupRec.fPopupBounds);
-					DrawPopupMenu(pDialogPtr, gPopupRec.fPopupItemID);
-
-					myFilter = true; // dialog is over
-					// have ModalDialog return that the user changed items
-					*pItemHitPtr = gPopupRec.fPopupItemID;
-				} // if new choice
-			} // if chosen
-		} // if our popup Item
-	} // if mousedown
-
-	return myFilter;
-
-} // PopupMouseDnDialogFilterProc
+#pragma segment main
 
 
 /*------------------------------------------------------------*/
@@ -346,7 +203,7 @@ static void MoveWindowToMaxDevice(WindowPtr theWindow)
 		return;
 
 	// Set up bounds for all devices
-	SetRect(&maxDragBounds, -32000, -32000, 32000, 32000);
+	SetRect(&maxDragBounds, -16000, -16000, 16000, 16000);
 
 	// Find main screen bounds
 	theMainGDevice = GetMainDevice();
@@ -387,18 +244,35 @@ static pascal void outlineDefaultButton(DialogPtr theDialog, short theItem)
 {
 #pragma unused (theItem)
 	PenState	SavePen;
+	GrafPtr		oldPort;
 	short		itemType;
 	Handle		itemHandle;
 	Rect		dispRect;
 
-	GetPenState(&SavePen);
-	/* use 'ok' (#1) item's rectangle */
-	GetDItem(theDialog, ok, &itemType, &itemHandle, &dispRect);
+	/* remember original port, and set to dialog port */
+	GetPort(&oldPort);
 	SetPort(theDialog);
-	PenSize(3, 3);
+
+	GetPenState(&SavePen);
+	PenNormal();
+
+	/* use 'ok' (#1) item's rectangle */
+	GetDialogItem(theDialog, ok, &itemType, &itemHandle, &dispRect);
 	InsetRect(&dispRect, -4, -4);
+	if ((**(ControlHandle)itemHandle).contrlHilite != 0)
+	{	/* draw gray outline */
+		PenPat(&qd.gray);
+	}
+	else
+	{	/* draw solid outline */
+		PenPat(&qd.black);
+	}
+	/* draw outline */
+	PenSize(3, 3);
 	FrameRoundRect(&dispRect, 16, 16);
+	/* restore */
 	SetPenState(&SavePen);
+	SetPort(oldPort);
 } // outlineDefaultButton
 
 
@@ -409,10 +283,12 @@ static void SetupDefaultButton(DialogPtr theDialog)
     short	itemtype;
     Rect	itemrect;
     Handle	tempHandle;
+	UserItemUPP	drawProcUPP;
 
 	/* Set up User item (always #3) to display a border around OK button (#1) */
-	GetDItem(theDialog, 3, &itemtype, &tempHandle, &itemrect);
-    SetDItem(theDialog, 3, itemtype, (Handle)&outlineDefaultButton, &itemrect);
+	drawProcUPP = NewUserItemProc((ProcPtr)outlineDefaultButton);
+	GetDialogItem(theDialog, 3, &itemtype, &tempHandle, &itemrect);
+    SetDialogItem(theDialog, 3, itemtype, (Handle)&outlineDefaultButton, &itemrect);
 } // SetupDefaultButton
 
 
@@ -426,11 +302,11 @@ static void MoveDItem(DialogPtr theDialog, short theItemID, short h, short v)
 
 	// NOTE: We should check for CtrlItem here and call MoveControl instead, just lazy!
 	// get item
-	GetDItem(theDialog, theItemID, &itemtype, &tempHandle, &itemrect);
+	GetDialogItem(theDialog, theItemID, &itemtype, &tempHandle, &itemrect);
 	// move its view rect (to absolute pos)
 	OffsetRect(&itemrect, h-itemrect.left, v-itemrect.top);
 	// set new rect value back into item
-    SetDItem(theDialog, theItemID, itemtype, tempHandle, &itemrect);
+    SetDialogItem(theDialog, theItemID, itemtype, tempHandle, &itemrect);
 } // MoveDItem
 
 
@@ -510,7 +386,7 @@ static Boolean GetOutputFile(char * theOutFileName)
 	strcpy(pOutFileName, theOutFileName);
 	c2pstr(pOutFileName);
 	/* prompt */
-	SFPutFile(where, "\pCreate output Coil file.", pOutFileName,
+	SFPutFile(where, "\pCreate output file.", pOutFileName,
 				(DlgHookProcPtr)NULL, &reply);
 	if (reply.good)
 	{
@@ -543,7 +419,7 @@ ToolBoxInit()
 	InitCursor();
 
 	/* create master pointer blocks for heap o' mallocs */
-	for (k=0; k<10; k++)
+	for (k=0; k<8; k++)
 		MoreMasters();
 
 	// DTS Hocus Pocus to bring our app to the front
@@ -554,13 +430,12 @@ ToolBoxInit()
 	SysEnvirons(1, &gSysEnvirons);
 	if	(
 		(gSysEnvirons.machineType < envMachUnknown)
-	||	(gSysEnvirons.systemVersion < 0x0604)
+	||	(gSysEnvirons.systemVersion < 0x0700)
 	||	(gSysEnvirons.processor < env68020)
 		)
 	{
 	    FatalErrDialog(DlogID_BADENV);
 	}
-
 }
 
 
@@ -594,7 +469,7 @@ determine_color_index(color)
 
 
 /*------------------------------------------------------------*/
-Coord3ToRGBColor(COORD3 c3color, RGBColor	* rgbc)
+static void Coord3ToRGBColor(COORD3 c3color, RGBColor	* rgbc)
 {
    rgbc->red    = c3color[R_COLOR]*65535.0;
    rgbc->green  = c3color[G_COLOR]*65535.0;
@@ -603,8 +478,7 @@ Coord3ToRGBColor(COORD3 c3color, RGBColor	* rgbc)
 
 
 /*------------------------------------------------------------*/
-void
-display_clear()
+void display_clear()
 {
    Rect re;
 
@@ -630,9 +504,9 @@ display_init(xres, yres, bk_color)
    int xres, yres;
    COORD3 bk_color;
 {
-   RGBColor c;
-   int i;
-   int r, g, b;
+//   RGBColor c;
+//   int i;
+//   int r, g, b;
    Rect re;
    COORD3 cColor;
 
@@ -789,11 +663,7 @@ display_plot(x, y, color)
 {
    double xt, yt;
 
-   if (gMultiTaskCount++ > MAX_TASK_WAIT)
-   {
-   	   gMultiTaskCount = 0;
-	   MacMultiTask();
-   }
+   MacMultiTask();
    yt = maxy/2 - Y_Display_Scale * y;
    xt = maxx/2 + X_Display_Scale * x;
 
@@ -814,7 +684,7 @@ display_line(x0, y0, x1, y1, color)
    COORD3 color;
 {
    double xt, yt;
-   int color_index;
+//   int color_index;
 
    if (gMultiTaskCount++ > MAX_TASK_WAIT)
    {
@@ -880,11 +750,10 @@ display_line(x0, y0, x1, y1, color)
 #define	Ditem_ST_InFileName		6
 #define	Ditem_RB_RTO_BuiltIn	7
 #define	Ditem_RB_RTO_TriMesh	8
-#define	Ditem_ST_OutTitle		9
-#define	Ditem_PU_OutFormat		10
-#define	Ditem_ST_SizeText1		11
-#define	Ditem_ST_SizeText2		12
-#define	Ditem_ST_RTO_Title		13
+#define	Ditem_PU_OutFormat		9
+#define	Ditem_ST_SizeText1		10
+#define	Ditem_ST_SizeText2		11
+#define	Ditem_ST_RTO_Title		12
 #define	Ditem_MAX				Ditem_ST_RTO_Title
 
 // STR# resource IDs for this dialog
@@ -922,7 +791,7 @@ static Boolean GetUserOptions(int spdType)
 
 	// preload all the dialog items we care about
 	for (k = 1; k<=Ditem_MAX; k++)
-		GetDItem(myDialog, k, &dummy, (Handle *) &theDItems[k], &displayRect);
+		GetDialogItem(myDialog, k, &dummy, (Handle *) &theDItems[k], &displayRect);
 
 	// Get app-specific strings from resources
 	GetIndString(theAppName,		StrID_APP_NAME,		spdType);
@@ -934,7 +803,7 @@ static Boolean GetUserOptions(int spdType)
 //	strcpy(aString, lib_get_version_str());
 //	c2pstr(aString);
 	// get Mac version from resource instead
-		GetAppVersionPString(1, appVers);
+	GetAppVersionPString(1, appVers);
 
 	// fill in app-specific strings in dialog
 	ParamText(theAppName, theSizePrompt, theInFilePrompt, appVers);
@@ -954,17 +823,17 @@ static Boolean GetUserOptions(int spdType)
 	if (!gHasSizePrompt)
 	{
 		MoveDItem(myDialog, Ditem_ET_SizePrompt, -1000, -1000);
-		MoveDItem(myDialog, Ditem_ST_SizeText1, -1000, -1000);
-		MoveDItem(myDialog, Ditem_ST_SizeText2, -1000, -1000);
+		MoveDItem(myDialog, Ditem_ST_SizeText1,  -1000, -1000);
+		MoveDItem(myDialog, Ditem_ST_SizeText2,  -1000, -1000);
 	}
 	if (!gHasInFilePrompt)
 	{
 		MoveControl(theDItems[Ditem_BT_GetInFile], -1000, -1000);
-		MoveDItem(myDialog, Ditem_ST_InFileName, -1000, -1000);
+		MoveDItem(myDialog, Ditem_ST_InFileName,   -1000, -1000);
 	}
 	if (!gHasPatchPrompt)
 	{
-		MoveDItem(myDialog, Ditem_ST_RTO_Title, -1000, -1000);
+		MoveDItem(myDialog, Ditem_ST_RTO_Title,      -1000, -1000);
 		MoveControl(theDItems[Ditem_RB_RTO_BuiltIn], -1000, -1000);
 		MoveControl(theDItems[Ditem_RB_RTO_TriMesh], -1000, -1000);
 	}
@@ -972,16 +841,13 @@ static Boolean GetUserOptions(int spdType)
 	// fill initial size value into dialog
 	sprintf(aString, "%d", gMacParmSize);
 	c2pstr(aString);
-	SetIText((Handle) theDItems[Ditem_ET_SizePrompt], (StringPtr)aString);
+	SetDialogItemText((Handle) theDItems[Ditem_ET_SizePrompt], (StringPtr)aString);
 
-	// init the popup
-	if (!IPopupMenu(myDialog, MenuID_OutFormat, Ditem_ST_OutTitle, Ditem_PU_OutFormat, gMacRayTracerKind+1))
-	{
-		SysBeep(4);
-		return false;
-	}
+	// Preset the popup to POV-Ray 3 for now
+	SetControlValue(theDItems[Ditem_PU_OutFormat], gMacRayTracerKind+1);
+
 	// select something..
-	SelIText(myDialog, Ditem_ET_SizePrompt, 0, -1);
+	SelectDialogItemText(myDialog, Ditem_ET_SizePrompt, 0, -1);
 
 	// finally show the user our dialog
 	MoveWindowToMaxDevice(myDialog);
@@ -991,11 +857,11 @@ static Boolean GetUserOptions(int spdType)
 	do
 	{
 		// Set the radio buttons
-		SetCtlValue(theDItems[Ditem_RB_RTO_BuiltIn], gMacDoBuiltIn);
-		SetCtlValue(theDItems[Ditem_RB_RTO_TriMesh], !gMacDoBuiltIn);
+		SetControlValue(theDItems[Ditem_RB_RTO_BuiltIn], gMacDoBuiltIn);
+		SetControlValue(theDItems[Ditem_RB_RTO_TriMesh], !gMacDoBuiltIn);
 
 		// get user input
-		ModalDialog(PopupMouseDnDialogFilterProc, &itemHit);
+		ModalDialog(NULL, &itemHit);
 
 		// process some user interface elements
 		switch (itemHit)
@@ -1012,7 +878,10 @@ static Boolean GetUserOptions(int spdType)
 				GetInputFile(gInFileName);
 				strcpy(aString, gInFileName);
 				c2pstr(aString);
-				SetIText((Handle) theDItems[Ditem_ST_InFileName], (StringPtr)aString);
+				SetDialogItemText((Handle) theDItems[Ditem_ST_InFileName], (StringPtr)aString);
+				break;
+
+			case Ditem_PU_OutFormat:
 				break;
 		}
 	} while ((itemHit != ok) && (itemHit != cancel));
@@ -1023,7 +892,7 @@ static Boolean GetUserOptions(int spdType)
 		// Size
 		if (gHasSizePrompt)
 		{
-			GetIText((Handle) theDItems[Ditem_ET_SizePrompt], (StringPtr)aString);
+			GetDialogItemText((Handle) theDItems[Ditem_ET_SizePrompt], (StringPtr)aString);
 			p2cstr((StringPtr)aString);
 			gMacParmSize = atoi(aString);
 			if ((gMacParmSize < 1) || (gMacParmSize > 9))
@@ -1031,7 +900,7 @@ static Boolean GetUserOptions(int spdType)
 		}
 
 		// output format from popup
-		gMacRayTracerKind = gPopupRec.fLastChoice - 1;
+		gMacRayTracerKind = GetControlValue(theDItems[Ditem_PU_OutFormat]) - 1;
 	}
 
 	DisposeDialog(myDialog);
@@ -1045,26 +914,200 @@ static Boolean GetUserOptions(int spdType)
 /*------------------------------------------------------------*/
 static void AddArgvOpt(int *argcp, char ***argvp, char * optionStr)
 {
-#pragma unused (argvp)
 	strcpy(argvCurrent, optionStr);
-	macArgv[*argcp] = argvCurrent;
+	(*argvp)[*argcp] = argvCurrent;
 	argvCurrent += strlen(argvCurrent)+1; /* skip over string and null */
 	(*argcp)++;
 }
 
 
 /*------------------------------------------------------------*/
-void RedrawMyDialog(DialogPtr pDialogPtr)
-{
-	if (pDialogPtr)
-	{
-		SelectWindow(pDialogPtr);
-		DrawDialog(pDialogPtr);
-	}
-} // RedrawDialog
+/*  gProgressItemValue will be set to 0 to 100 by CalculateProgressValue() */
+
+#define	kProgressItemNum	3
+static unsigned long	gProgressItemValue;
+static short			gProgressItemNum;
+static Rect				gProgressItemRect;
+static RgnHandle		gProgressItemRgn = NULL;
 
 
 /*------------------------------------------------------------*/
+// Change the type/creator of the output file
+static void SetOutputFileType(FSSpec *anFSSpec)
+{
+	OSErr	anError;
+	FInfo	myFileInfo;
+
+	// Get file info, so we can change it
+	anError = FSpGetFInfo(anFSSpec, &myFileInfo);
+
+	if (anError==noErr)
+		{
+		myFileInfo.fdType		= gFileInfo[gMacRayTracerKind].fdType;
+		myFileInfo.fdCreator	= gFileInfo[gMacRayTracerKind].fdCreator;
+		anError = FSpSetFInfo(anFSSpec, &myFileInfo);
+		}
+}
+
+
+/*------------------------------------------------------------*/
+// Set up a user item proc for drawing progress bar
+static pascal void showProgress_UProc(DialogPtr theDialog, short theItem)
+{
+#pragma unused (theItem)
+	PenState	SavePen;
+	short		progressPos;
+	Rect		dispRect,
+				outerRect,
+				progressRect;
+	RGBColor	pBackColor	= {0xf000,0xf000,0xf000};	// background
+	RGBColor	pProgColor	= {0,0x7000,0};					// progress bar
+	RGBColor	pFrameColor	= {0,0,0};					// outer frame rect
+
+	// remember original penstate
+	SetPort(theDialog);
+	GetPenState(&SavePen);
+
+	// find progress bar rectangle
+	dispRect = gProgressItemRect;
+
+	// outer frame
+	outerRect = dispRect;
+	InsetRect(&outerRect, 1, 1);
+	PenSize(1, 1);
+	RGBForeColor(&pFrameColor);
+	FrameRect(&outerRect);
+
+	// set up progress rect
+	progressRect = dispRect;
+	InsetRect(&progressRect, 3, 3);
+
+	// calculate inner bar progress position
+	if (gProgressItemValue > 100)
+		gProgressItemValue = 100;
+	progressPos = ((unsigned long)(progressRect.right - progressRect.left) * gProgressItemValue) / 100L;
+
+	// draw inner bar (left filled side)
+	if (progressPos > 0)
+	{
+		progressRect.right = dispRect.left + progressPos;
+		RGBForeColor(&pProgColor);
+		PaintRect(&progressRect);
+
+		// draw inner bar (right open side)
+		if (progressPos < 100)
+		{
+			progressRect.left = dispRect.left + progressPos;
+			RGBForeColor(&pBackColor);
+			PaintRect(&progressRect);
+		}
+	}
+
+	// restore state
+	SetPenState(&SavePen);
+
+} // showProgress_UProc
+
+
+/*------------------------------------------------------------*/
+// Sets dialog item's display proc to draw progress bar
+static void SetupProgressItem(DialogPtr theDialog, short theItemNum)
+{
+    short	itemtype;
+    Handle	tempHandle;
+	UserItemUPP	drawProcUPP;
+
+	drawProcUPP = NewUserItemProc((ProcPtr)showProgress_UProc);
+
+	gProgressItemValue = 0;
+
+	// Set up User item to display a progress bar
+	GetDialogItem(theDialog, theItemNum, &itemtype, &tempHandle, &gProgressItemRect);
+	SetDialogItem(theDialog, theItemNum, itemtype, (Handle)drawProcUPP, &gProgressItemRect);
+
+	// remember.. for later updates
+	gProgressItemRgn = NewRgn();
+	RectRgn(gProgressItemRgn, &gProgressItemRect);
+	gProgressItemNum = theItemNum;
+} // SetupProgressItem
+
+
+/*------------------------------------------------------------*/
+// Loads Dialog resource and sets up progress bar user item proc
+static DialogPtr GetNewProgressDialog(short theDialogID, short theProgressItemNum)
+{
+	DialogPtr	theDialog = NULL;
+
+	theDialog = GetNewDialog(theDialogID, NULL, (WindowPtr)-1);
+
+	if (theDialog)
+		SetupProgressItem(theDialog, theProgressItemNum);
+
+	return (theDialog);
+
+} // GetNewProgressDialog
+
+
+/*------------------------------------------------------------*/
+// Calculates current value for progress bar
+static void CalculateProgressValue(long lowestVal, long highestVal, long currentVal)
+{
+	// Clip against upper & lower bounds
+	if (currentVal < lowestVal)
+		currentVal = lowestVal;
+	else
+		if (currentVal > highestVal)
+			currentVal = highestVal;
+
+	// Now calculate current value
+	gProgressItemValue = (currentVal-lowestVal) * 100L / (highestVal-lowestVal);
+
+} // CalculateProgressValue
+
+
+/*------------------------------------------------------------*/
+// Redisplay dialog
+static void redrawProgressDialog(DialogPtr pDialogPtr, RgnHandle updRgn)
+{
+	BeginUpdate(pDialogPtr);
+	UpdateDialog(pDialogPtr, updRgn);
+	EndUpdate(pDialogPtr);
+}
+
+/*------------------------------------------------------------*/
+// Recalculate progress bar and redisplay dialog
+static void updateProgressDialog(DialogPtr pDialogPtr, long lowestVal, long highestVal, long currentVal)
+{
+	CalculateProgressValue(lowestVal, highestVal, currentVal);
+	SetPort(pDialogPtr);
+	InvalRect(&gProgressItemRect);
+
+	redrawProgressDialog(pDialogPtr, gProgressItemRgn);
+
+} // updateProgressDialog
+
+
+/*------------------------------------------------------------*/
+// dispose the progress bar dialog
+static void disposeProgressDialog(DialogPtr pDialogPtr)
+{
+	if (pDialogPtr)
+	{
+		DisposeDialog(pDialogPtr);
+		pDialogPtr = NULL;
+	}
+
+	if (gProgressItemRgn)
+	{
+		DisposeRgn(gProgressItemRgn);
+		gProgressItemRgn = NULL;
+	}
+} // disposeProgressDialog
+
+
+
+/*------------------------------------------------------------*/
+#pragma segment main
 void MacInit(int *argcp, char ***argvp, int spdType)
 {
 	char	strTemp[10];
@@ -1082,11 +1125,11 @@ void MacInit(int *argcp, char ***argvp, int spdType)
 		if (gMacRayTracerKind != OUTPUT_VIDEO)
 		{
 			/* put up "please wait" dialog */
-			gDialogPtr = SetupNewDialog(DlogID_WAIT, false);
+			gDialogPtr	= GetNewProgressDialog(DlogID_WAIT, kProgressItemNum);
 			if (gDialogPtr)
 			{
 				ShowWindow(gDialogPtr);
-				RedrawMyDialog(gDialogPtr);
+				redrawProgressDialog(gDialogPtr, NULL);
 			}
 			else
 			{
@@ -1096,7 +1139,7 @@ void MacInit(int *argcp, char ***argvp, int spdType)
 		}
 
 		*argcp = 0;			/* Set argc to 1 parm initially */
-		*argvp = (char **)&macArgv;	/* point argv to our buffer */
+//		*argvp = (char **)&macArgv;	/* point argv to our buffer */
 		argvCurrent = (char *)&macArgvBuffer;	/* start at beginning of buffer */
 
 		/*==== Program name is always first ====*/
@@ -1134,20 +1177,41 @@ void MacInit(int *argcp, char ***argvp, int spdType)
 	}
 } /* MacInit */
 
+/*------------------------------------------------------------*/
+void MacProgress(int STARTVAL,int CURRVAL,int ENDVAL)
+{
+	if (gDialogPtr)
+		updateProgressDialog(gDialogPtr, STARTVAL, ENDVAL, CURRVAL);
+	MacMultiTask();
+}
+
 
 /*------------------------------------------------------------*/
 void MacMultiTask(void)
 {
+	Boolean	inBackground;
 	EventRecord	anEvent;
-	WaitNextEvent(everyEvent, &anEvent, 1, NULL);
 
-	/* grody hack to redraw dialog on suspend/resume */
-	if (anEvent.what == kOSEvent)
-		if (((anEvent.message >> 24) & 0x0FF) == kSuspendResumeMessage)
-		{	/* high byte of message */
-			/* suspend/resume is also an activate/deactivate */
-			RedrawMyDialog(gDialogPtr);
-		}
+   if (gMultiTaskCount++ > MAX_TASK_WAIT)
+   {
+   	   gMultiTaskCount = 0;
+
+		WaitNextEvent(everyEvent, &anEvent, 4, NULL);
+
+		/* grody hack to redraw dialog on suspend/resume */
+		if (anEvent.what == osEvt)
+			if (((anEvent.message >> 24) & 0x0FF) == kSuspendResumeMessage)
+			{	/* high byte of message */
+				inBackground = (anEvent.message & resumeFlag) == 0;
+				/* suspend/resume is also an activate/deactivate */
+				if (!inBackground)
+					{
+					redrawProgressDialog(gDialogPtr, NULL);
+					// restore watch cursor
+					SetCursor(*GetCursor(watchCursor));
+					}
+			}
+	}
 
 } /* MacMultiTask */
 
@@ -1155,5 +1219,14 @@ void MacMultiTask(void)
 /*------------------------------------------------------------*/
 void MacShutDown(void)
 {
-	/* nothing needed for now */
+	FSSpec	anFSSpec;
+	/* convert output filename to a Mac FSSpec */
+	c2pstr(gOutfileName);
+	FSMakeFSSpec(0, 0, (StringPtr)gOutfileName, &anFSSpec);
+	/* change output file type */
+	SetOutputFileType(&anFSSpec);
+
+	/* remove the Please Wait dialog */
+	if (gDialogPtr)
+		disposeProgressDialog(gDialogPtr);
 } /* MacShutDown */

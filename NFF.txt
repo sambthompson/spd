@@ -1,24 +1,20 @@
 Neutral File Format,
-    by Eric Haines, 3D/Eye Inc, 1050 Craft Road, Ithaca, NY  14850
-    email: erich@eye.com
+    by Eric Haines, Autodesk, 1050 Craft Road, Ithaca, NY  14850
+    email: erich@acm.org
 
 Draft #1, 10/3/88
 Version 2.7, as of 5/22/90 - added information on hither, light color
 Version 3.0, 12/17/90 - minor information changes
 Version 3.1, 11/2/92 - more minor information changes
+Version 3.9, 12/4/96 - minor changes in introduction
 
 The NFF (Neutral File Format) is designed as a minimal scene description
 language.  The language was designed in order to test various rendering
 algorithms and efficiency schemes.  It is meant to describe the geometry and
 basic surface characteristics of objects, the placement of lights, and the
 viewing frustum for the eye.  Some additional information is provided for
-esthetic reasons (such as the color of the objects, which is not strictly
+aesthetic reasons (such as the color of the objects, which is not strictly
 necessary for testing the efficiency of rendering algorithms).
-
-Future enhancements could include:  circle and torus objects, spline surfaces
-with trimming curves, directional lights, characteristics for positional
-lights, CSG descriptions, and probably more by the time you read this.
-Comments, suggestions, and criticisms are all welcome.
 
 At present the NFF file format is used in conjunction with the SPD (Standard
 Procedural Database) software, a package designed to create a variety of
@@ -28,25 +24,12 @@ Applications, vol. 7, no. 11, November 1987, pp. 3-5.  See IEEE CG&A, vol. 8,
 no. 1, January 1988, p. 18 for the correct image of the tree database (the
 only difference is that the sky is blue, not orange).
 
-The SPD package is available via anonymous FTP from:
+The SPD package (along with images of the databases) is available from:
 
-	princeton.edu [128.112.128.1]:  /pub/Graphics [note the capital "G"!]
-	wuarchive.wustl.edu [128.252.135.4]:  /graphics/graphics/objects
+	http://www.acm.org/tog/resources/SPD/
 
-among others.  For those without FTP access, write to the netlib automatic
-mailer:  research!netlib and netlib@ornl.gov are the sites.  Send a one line
-message "send index" for more information, or "send haines from graphics" for
-the latest version of the SPD package.
-
-If you would like to see images of the databases, FTP from:
-
-	gondwana.ecr.mu.oz.au [128.250.70.62]:  pub/images/haines
-	nic.funet.fi [128.214.6.100]:  somewhere...
-
-If you're looking for a good scene description language, see Craig Kolb's
-Rayshade software (found on weedeater).  Rayshade also has an awk program to
-convert NFF to Rayshade's format.  NFF is meant for testing efficiency schemes
-and so has minimal support for lighting and shading.
+NFF is meant for testing efficiency schemes and so has minimal support for
+lighting and shading.  For a reasonable scene description language, see VRML.
 
 By providing a minimal interface, NFF is meant to act as a simple format to
 allow the programmer to quickly write filters to move from NFF to the

@@ -1,7 +1,7 @@
 /*
  * libinf.c - general info routines.
  *
- * Author:  Eric Haines, 3D/Eye, Inc.
+ * Author:  Eric Haines
  *
  */
 
@@ -51,8 +51,8 @@ light_ptr gLib_lights = NULL;
 viewpoint gViewpoint = {
 	{0, 0, -10},
     {0, 0, 0},
-      {0, 1, 0},
-      45, 1, 1.0e-3, 10, 128, 128,
+    {0, 1, 0},
+     45, 1, 1.0e-3, 10, 128, 128,
     { {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1} }
 };
 
@@ -68,7 +68,7 @@ void tab_indent PARAMS((void))
     int      k;
     /* Q&D way to do it... */
     for (k=0; k<gTab_width*gTab_level; k++)
-      putc(' ', gOutfile);
+		putc(' ', gOutfile);
 } /* tab_printf */
 
 
@@ -84,7 +84,7 @@ void tab_dec PARAMS((void))
 {
     gTab_level--;
     if (gTab_level < 0)
-	gTab_level = 0;
+		gTab_level = 0;
 } /* tab_dec */
 
 
@@ -103,65 +103,80 @@ lib_get_version_str PARAMS((void))
  * Routines to set/reset the various output parameters
  */
 /*-----------------------------------------------------------------*/
-void
-lib_set_output_file(new_outfile)
-    FILE *new_outfile;
+#ifdef ANSI_FN_DEF
+void lib_set_output_file (FILE *new_outfile)
+#else
+void lib_set_output_file(new_outfile)
+FILE *new_outfile;
+#endif
 {
     if (new_outfile == NULL)
-     gOutfile = stdout;
+		gOutfile = stdout;
     else
-      gOutfile = new_outfile;
+		gOutfile = new_outfile;
 }
 
 /*-----------------------------------------------------------------*/
-void
-lib_set_default_texture(default_texture)
-    char *default_texture;
+#ifdef ANSI_FN_DEF
+void lib_set_default_texture (char *default_texture)
+#else
+void lib_set_default_texture(default_texture)
+char *default_texture;
+#endif
 {
     gTexture_name = default_texture;
 }
 
 /*-----------------------------------------------------------------*/
-void
-lib_set_raytracer(default_tracer)
-    int default_tracer;
+#ifdef ANSI_FN_DEF
+void lib_set_raytracer(int default_tracer)
+#else
+void lib_set_raytracer(default_tracer)
+int default_tracer;
+#endif
 {
     if (default_tracer < OUTPUT_VIDEO ||
-     default_tracer > OUTPUT_DELAYED) {
-      fprintf(stderr, "Unknown renderer index: %d\n", default_tracer);
-	exit(1);
+		default_tracer > OUTPUT_DELAYED) {
+		fprintf(stderr, "Unknown renderer index: %d\n", default_tracer);
+		exit(1);
     }
     gRT_out_format = default_tracer;
 }
 
 /*-----------------------------------------------------------------*/
-void
-lib_set_polygonalization(u_steps, v_steps)
-    int u_steps, v_steps;
+#ifdef ANSI_FN_DEF
+void lib_set_polygonalization(int u_steps, int v_steps)
+#else
+void lib_set_polygonalization(u_steps, v_steps)
+int u_steps, v_steps;
+#endif
 {
     if ((u_steps > 0) && (v_steps > 0)) {
-	gU_resolution = u_steps;
-	gV_resolution = v_steps;
+		gU_resolution = u_steps;
+		gV_resolution = v_steps;
     }
 }
 
 /*-----------------------------------------------------------------*/
-void
-lookup_surface_stats(index, tcount, tior)
-    int index, *tcount;
-    double *tior;
+#ifdef ANSI_FN_DEF
+void lookup_surface_stats(int index, int *tcount, double *tior)
+#else
+void lookup_surface_stats(index, tcount, tior)
+int index, *tcount;
+double *tior;
+#endif
 {
     surface_ptr temp_ptr = gLib_surfaces;
-
-    while (temp_ptr != NULL && temp_ptr->surf_index != index)
-       temp_ptr = temp_ptr->next;
+	
+    while (temp_ptr != NULL && (int)temp_ptr->surf_index != index)
+		temp_ptr = temp_ptr->next;
     if (temp_ptr != NULL) {
-      *tior = temp_ptr->ior;
-      if (*tior < 1.0) *tior = 1.0;
-      *tcount = temp_ptr->surf_index;
+		*tior = temp_ptr->ior;
+		if (*tior < 1.0) *tior = 1.0;
+		*tcount = temp_ptr->surf_index;
     }
     else {
-       *tior = 1.0;
-       *tcount = 0;
+		*tior = 1.0;
+		*tcount = 0;
     }
 }

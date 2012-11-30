@@ -13,7 +13,7 @@
  *	205,206,216,223).  Also, note that the bottom (the last four patches)
  *	is not flat - blame Frank Crow, not me.
  *
- * Author:  Eric Haines, 3D/Eye, Inc.
+ * Author:  Eric Haines
  *
  * size_factor determines the number of objects output.
  *	Total patches = 32*2*n*n - 8*n     [degenerates are deleted]
@@ -395,40 +395,41 @@ static	COORD3	Verts[290] = {
  * check if normal is (0 0 0), if so, check that polygon is not degenerate.
  * If degenerate, return FALSE, else set normal.
  */
-int	check_for_cusp( tot_vert, vert, norm )
+static int
+check_for_cusp( tot_vert, vert, norm )
 int	tot_vert ;
 COORD3	vert[] ;
 COORD3	norm[] ;
 {
-int	count, i, nv ;
-
-    for ( count = 0, i = tot_vert ; i-- ; ) {
-	/* check if vertex is at cusp */
-	if ( IS_VAL_ALMOST_ZERO( vert[i][X], 0.0001 ) &&
-	     IS_VAL_ALMOST_ZERO( vert[i][Y], 0.0001 ) ) {
-	    count++ ;
-	    nv = i ;
+	int	count, i, nv ;
+	
+	for ( count = 0, i = tot_vert ; i-- ; ) {
+		/* check if vertex is at cusp */
+		if ( IS_VAL_ALMOST_ZERO( vert[i][X], 0.0001 ) &&
+			IS_VAL_ALMOST_ZERO( vert[i][Y], 0.0001 ) ) {
+			count++ ;
+			nv = i ;
+		}
 	}
-    }
-
-    if ( count > 1 ) {
-	/* degenerate */
-	return( FALSE ) ;
-    }
-    if ( count == 1 ) {
-	/* check if point is somewhere above the middle of the teapot */
-	if ( vert[nv][Z] > 1.5 ) {
-	    /* cusp at lid */
-	    SET_COORD3( norm[nv], 0.0, 0.0, 1.0 ) ;
-	} else {
-	    /* cusp at bottom */
-	    SET_COORD3( norm[nv], 0.0, 0.0, -1.0 ) ;
+	
+	if ( count > 1 ) {
+		/* degenerate */
+		return( FALSE ) ;
 	}
-    }
-    return( TRUE ) ;
+	if ( count == 1 ) {
+		/* check if point is somewhere above the middle of the teapot */
+		if ( vert[nv][Z] > 1.5 ) {
+			/* cusp at lid */
+			SET_COORD3( norm[nv], 0.0, 0.0, 1.0 ) ;
+		} else {
+			/* cusp at bottom */
+			SET_COORD3( norm[nv], 0.0, 0.0, -1.0 ) ;
+		}
+	}
+	return( TRUE ) ;
 }
 
-
+static void
 points_from_basis( tot_vert, s, t, mgm, vert, norm )
 int	tot_vert ;
 double	s[] ;
@@ -437,57 +438,58 @@ MATRIX	mgm[3] ;
 COORD3	vert[] ;
 COORD3	norm[] ;
 {
-int	i, num_vert, p ;
-double	sval, tval, dsval, dtval, sxyz, txyz ;
-COORD3	sdir, tdir ;
-COORD4	sp, tp, dsp, dtp, tcoord ;
-
-    for ( num_vert = 0 ; num_vert < tot_vert ; num_vert++ ) {
-
-	sxyz = s[num_vert] ;
-	txyz = t[num_vert] ;
-
-	/* get power vectors and their derivatives */
-	for ( p = 4, sval = tval = 1.0 ; p-- ; ) {
-	    sp[p] = sval ;
-	    tp[p] = tval ;
-	    sval *= sxyz ;
-	    tval *= txyz ;
-
-	    if ( p == 3 ) {
-		dsp[p] = dtp[p] = 0.0 ;
-		dsval = dtval = 1.0 ;
-	    } else {
-		dsp[p] = dsval * (double)(3-p) ;
-		dtp[p] = dtval * (double)(3-p) ;
-		dsval *= sxyz ;
-		dtval *= txyz ;
-	    }
+	int	i, num_vert, p ;
+	double	sval, tval, dsval, dtval, sxyz, txyz ;
+	COORD3	sdir, tdir ;
+	COORD4	sp, tp, dsp, dtp, tcoord ;
+	
+	for ( num_vert = 0 ; num_vert < tot_vert ; num_vert++ ) {
+		
+		sxyz = s[num_vert] ;
+		txyz = t[num_vert] ;
+		
+		/* get power vectors and their derivatives */
+		for ( p = 4, sval = tval = 1.0 ; p-- ; ) {
+			sp[p] = sval ;
+			tp[p] = tval ;
+			sval *= sxyz ;
+			tval *= txyz ;
+			
+			if ( p == 3 ) {
+				dsp[p] = dtp[p] = 0.0 ;
+				dsval = dtval = 1.0 ;
+			} else {
+				dsp[p] = dsval * (double)(3-p) ;
+				dtp[p] = dtval * (double)(3-p) ;
+				dsval *= sxyz ;
+				dtval *= txyz ;
+			}
+		}
+		
+		/* do for x,y,z */
+		for ( i = 0 ; i < 3 ; i++ ) {
+			/* multiply power vectors times matrix to get value */
+			lib_transform_coord( tcoord, sp, mgm[i] ) ;
+			vert[num_vert][i] = DOT4( tcoord, tp ) ;
+			
+			/* get s and t tangent vectors */
+			lib_transform_coord( tcoord, dsp, mgm[i] ) ;
+			sdir[i] = DOT4( tcoord, tp ) ;
+			
+			lib_transform_coord( tcoord, sp, mgm[i] ) ;
+			tdir[i] = DOT4( tcoord, dtp ) ;
+		}
+		
+		/* find normal */
+		CROSS( norm[num_vert], tdir, sdir ) ;
+		(void)lib_normalize_vector( norm[num_vert] ) ;
 	}
-
-	/* do for x,y,z */
-	for ( i = 0 ; i < 3 ; i++ ) {
-	    /* multiply power vectors times matrix to get value */
-	    lib_transform_coord( tcoord, sp, mgm[i] ) ;
-	    vert[num_vert][i] = DOT4( tcoord, tp ) ;
-
-	    /* get s and t tangent vectors */
-	    lib_transform_coord( tcoord, dsp, mgm[i] ) ;
-	    sdir[i] = DOT4( tcoord, tp ) ;
-
-	    lib_transform_coord( tcoord, sp, mgm[i] ) ;
-	    tdir[i] = DOT4( tcoord, dtp ) ;
-	}
-
-	/* find normal */
-	CROSS( norm[num_vert], tdir, sdir ) ;
-	(void)lib_normalize_vector( norm[num_vert] ) ;
-    }
 }
 
 /* Compute points on each spline surface of teapot by brute force.
  * Forward differencing would be faster, but this is compact & simple.
  */
+static void
 output_teapot()
 {
 /* bezier form */
@@ -501,155 +503,162 @@ COORD3	vert[4], norm[4] ;
 COORD3	obj_color ;
 MATRIX	mst, g, mgm[3], tmtx ;
 
-    SET_COORD3( obj_color, 1.0, 0.5, 0.1 ) ;
-    lib_output_color(NULL, obj_color, 0.0, 0.75, 0.25, 0.25, 5.0, 0.0, 0.0 ) ;
+SET_COORD3( obj_color, 1.0, 0.5, 0.1 ) ;
+lib_output_color(NULL, obj_color, 0.0, 0.75, 0.25, 0.25, 5.0, 0.0, 0.0 ) ;
 
-    lib_transpose_matrix( mst, ms ) ;
+lib_transpose_matrix( mst, ms ) ;
 
-    for ( surf = 0 ; surf < NUM_PATCHES ; surf++ ) {
-
+for ( surf = 0 ; surf < NUM_PATCHES ; surf++ ) {
+	
 	/* get M * G * M matrix for x,y,z */
 	for ( i = 0 ; i < 3 ; i++ ) {
-	    /* get control patches */
-	    for ( r = 0 ; r < 4 ; r++ ) {
-		for ( c = 0 ; c < 4 ; c++ ) {
-		    g[r][c] = Verts[Patches[surf][r][c]][i] ;
+		/* get control patches */
+		for ( r = 0 ; r < 4 ; r++ ) {
+			for ( c = 0 ; c < 4 ; c++ ) {
+				g[r][c] = Verts[Patches[surf][r][c]][i] ;
+			}
 		}
-	    }
-
-	    lib_matrix_multiply( tmtx, ms, g ) ;
-	    lib_matrix_multiply( mgm[i], tmtx, mst ) ;
+		
+		lib_matrix_multiply( tmtx, ms, g ) ;
+		lib_matrix_multiply( mgm[i], tmtx, mst ) ;
 	}
-
+	
 	/* step along, get points, and output */
 	for ( sstep = 0 ; sstep < size_factor ; sstep++ ) {
-	    for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
-		for ( num_tri = 0 ; num_tri < 2 ; num_tri++ ) {
-		    for ( num_vert = 0 ; num_vert < 3 ; num_vert++ ) {
-			num_tri_vert = ( num_vert + num_tri * 2 ) % 4 ;
-			/* trickiness: add 1 to sstep if 1 or 2 */
-			s[num_vert] = (double)(sstep + (num_tri_vert/2 ? 1:0) )
-				    / (double)size_factor ;
-			/* trickiness: add 1 to tstep if 2 or 3 */
-			t[num_vert] = (double)(tstep + (num_tri_vert%3 ? 1:0) )
-				    / (double)size_factor ;
-		    }
-		    points_from_basis( 3, s, t, mgm, vert, norm ) ;
-		    /* don't output degenerate polygons */
-		    if ( check_for_cusp( 3, vert, norm ) ) {
-			lib_output_polypatch( 3, vert, norm ) ;
-			PLATFORM_MULTITASK();
-		    }
+		PLATFORM_PROGRESS(0, surf*size_factor+sstep, NUM_PATCHES*size_factor-1);
+		for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
+			for ( num_tri = 0 ; num_tri < 2 ; num_tri++ ) {
+				for ( num_vert = 0 ; num_vert < 3 ; num_vert++ ) {
+					num_tri_vert = ( num_vert + num_tri * 2 ) % 4 ;
+					/* trickiness: add 1 to sstep if 1 or 2 */
+					s[num_vert] = (double)(sstep + (num_tri_vert/2 ? 1:0) )
+						/ (double)size_factor ;
+					/* trickiness: add 1 to tstep if 2 or 3 */
+					t[num_vert] = (double)(tstep + (num_tri_vert%3 ? 1:0) )
+						/ (double)size_factor ;
+				}
+				points_from_basis( 3, s, t, mgm, vert, norm ) ;
+				/* don't output degenerate polygons */
+				if ( check_for_cusp( 3, vert, norm ) ) {
+					lib_output_polypatch( 3, vert, norm ) ;
+					PLATFORM_MULTITASK();
+				}
+			}
 		}
-	    }
 	}
-    }
+}
 }
 
+static void
 loc_to_square( sstep, tstep, vert )
 int	sstep ;
 int	tstep ;
 COORD3	vert[4] ;
 {
-int	i ;
-
+	int	i ;
+	
     for ( i = 0 ; i < 4 ; i++ ) {
-	/* vertex 0 & 3 are x.low, 1 & 2 are x.high */
-	vert[i][X] = 4.0 * ( 2.0 * (double)(sstep + (i%3 ? 1 : 0) ) /
-		(double)size_factor - 1.0 ) ;
-
-	/* vertex 0 & 1 are y.low, 2 & 3 are y.high */
-	vert[i][Y] = 4.0 * ( 2.0 * (double)(tstep + (i/2 ? 1 : 0) ) /
-		(double)size_factor - 1.0 ) ;
-
-	vert[i][Z] = 0.0 ;
+		/* vertex 0 & 3 are x.low, 1 & 2 are x.high */
+		vert[i][X] = 4.0 * ( 2.0 * (double)(sstep + (i%3 ? 1 : 0) ) /
+			(double)size_factor - 1.0 ) ;
+		
+		/* vertex 0 & 1 are y.low, 2 & 3 are y.high */
+		vert[i][Y] = 4.0 * ( 2.0 * (double)(tstep + (i/2 ? 1 : 0) ) /
+			(double)size_factor - 1.0 ) ;
+		
+		vert[i][Z] = 0.0 ;
     }
 }
 
+static void
 output_checkerboard()
 {
-int	sstep, tstep ;
-COORD3	vert[4] ;
-COORD3	obj_color ;
-
+	int	sstep, tstep ;
+	COORD3	vert[4] ;
+	COORD3	obj_color ;
+	
     SET_COORD3( obj_color, 1.0, 1.0, 1.0 ) ;
     lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 15.0, 0.0, 0.0 ) ;
     for ( sstep = 0 ; sstep < size_factor ; sstep++ ) {
-	for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
-	    if ( ( sstep + tstep ) % 2 ) {
-		loc_to_square( sstep, tstep, vert ) ;
-		lib_output_polygon( 4, vert ) ;
-	    }
-	}
+		for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
+			if ( ( sstep + tstep ) % 2 ) {
+				loc_to_square( sstep, tstep, vert ) ;
+				lib_output_polygon( 4, vert ) ;
+			}
+		}
     }
-
+	
     SET_COORD3( obj_color, 0.5, 0.5, 0.5 ) ;
     lib_output_color(NULL, obj_color, 0.0, 0.5, 0.5, 0.5, 15.0, 0.0, 0.0 ) ;
     for ( sstep = 0 ; sstep < size_factor ; sstep++ ) {
-	for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
-	    if ( !(( sstep + tstep ) % 2) ) {
-		loc_to_square( sstep, tstep, vert ) ;
-		lib_output_polygon( 4, vert ) ;
-	    }
-	}
+		for ( tstep = 0 ; tstep < size_factor ; tstep++ ) {
+			if ( !(( sstep + tstep ) % 2) ) {
+				loc_to_square( sstep, tstep, vert ) ;
+				lib_output_polygon( 4, vert ) ;
+			}
+		}
     }
 }
 
 
 int
 main(argc,argv)
-    int argc;
-    char *argv[];
+int argc;
+char *argv[];
 {
     double lscale;
     COORD3 back_color;
     COORD3 from, at, up;
     COORD4 light;
-
+	
     PLATFORM_INIT(SPD_TEAPOT);
-
+	
     /* Start by defining which raytracer we will be using */
     if ( lib_gen_get_opts( argc, argv,
-			&size_factor, &raytracer_format, &output_format ) ) {
-	return EXIT_FAIL;
+		&size_factor, &raytracer_format, &output_format ) ) {
+		return EXIT_FAIL;
     }
-    if ( lib_open( raytracer_format, "Teapot.out" ) ) {
-	return EXIT_FAIL;
+    if ( lib_open( raytracer_format, "Teapot" ) ) {
+		return EXIT_FAIL;
     }
-
-    lib_set_polygonalization(3, 3);
+	
+	/*    lib_set_polygonalization(3, 3); */
+	
     if ( size_factor == 1 ) {
-	fprintf(stderr,
-	  "warning: a size of 1 is not supported - use at your own risk\n" ) ;
+		fprintf(stderr,
+			"warning: a size of 1 is not supported - use at your own risk\n" ) ;
     }
-
+	
     /* output background color - UNC sky blue */
     /* NOTE: Do this BEFORE lib_output_viewpoint(), for display_init() */
     SET_COORD3( back_color, 0.078, 0.361, 0.753 ) ;
     lib_output_background_color( back_color ) ;
-
+	
     /* output viewpoint */
     SET_COORD3( from, 4.86, 7.2, 5.4 ) ;
     SET_COORD3( at, 0.0, 0.0, 0.0 ) ;
     SET_COORD3( up, 0.0, 0.0, 1.0 ) ;
     lib_output_viewpoint( from, at, up, 45.0, 1.0, 1.0, 512, 512 ) ;
-
-    /* For raytracers that don't scale the light intensity, we will do
-       it for them */
-    lscale = (raytracer_format == OUTPUT_NFF ||
-	      raytracer_format == OUTPUT_RTRACE ? 1.0 : 1.0 / sqrt(2.0));
-
+	
+    /*
+	 * For raytracers that don't scale the light intensity,
+	 * we will do it for them
+	 */
+	#define NUM_LIGHTS    2
+    lscale = ( ((raytracer_format==OUTPUT_NFF) || (raytracer_format==OUTPUT_RTRACE))
+	       ? 1.0 : 1.0 / sqrt(NUM_LIGHTS));
+	
     /* output light sources */
     SET_COORD4( light, -3.1, 9.8, 12.1, lscale ) ;
     lib_output_light( light ) ;
     SET_COORD4( light, 11.3, 5.1, 8.8, lscale ) ;
     lib_output_light( light ) ;
-
+	
     output_checkerboard() ;
     output_teapot() ;
-
+	
     lib_close();
-
+	
     PLATFORM_SHUTDOWN();
     return EXIT_SUCCESS;
 }

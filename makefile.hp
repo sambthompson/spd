@@ -1,5 +1,5 @@
 # makefile for standard procedural databases
-# Author:  Eric Haines, 3D/Eye Inc.
+# Author:  Eric Haines
 #   Works on HP 700 machines, might even work for you
 #
 #   NOTE: assumes you've done a
@@ -11,14 +11,14 @@ SUFOBJ=.o
 SUFEXE=.exe
 INC=def.h lib.h
 LIBOBJ=drv_hp$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) libvec$(SUFOBJ) libtx$(SUFOBJ)
-BASELIB=-L /usr/lib/X11R4 \
-			-lXwindow -lsbdl \
-			-lsb \
-			-lXhp11 -lX11 -ldld \
-			-lm
+BASELIB=-L /usr/lib/X11R5 \
+		-L /opt/graphics/common/lib \
+			-lXwindow -lhpgfx \
+			-lXhp11 -lX11 -lm -ldld
 
-all:		balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells jacks
+all:		balls gears mount rings teapot tetra tree \
+		readdxf readnff readobj \
+		sample lattice shells jacks sombrero nurbtst
 
 drv_hp$(SUFOBJ):	$(INC) drv_hp.c drv.h
 		$(CC) -c drv_hp.c
@@ -77,6 +77,9 @@ readdxf$(EXE):		$(LIBOBJ) readdxf.c
 readnff$(EXE):		$(LIBOBJ) readnff.c
 		$(CC) -o readnff$(EXE) readnff.c $(LIBOBJ) $(BASELIB)
 
+readobj$(EXE):		$(LIBOBJ) readobj.c
+		$(CC) -o readobj$(EXE) readobj.c $(LIBOBJ) $(BASELIB)
+
 sample$(EXE):		$(LIBOBJ) sample.c
 		$(CC) -o sample$(EXE) sample.c $(LIBOBJ) $(BASELIB)
 
@@ -89,7 +92,14 @@ shells$(EXE):		$(LIBOBJ) shells.c
 jacks$(EXE):		$(LIBOBJ) jacks.c
 		$(CC) -o jacks$(EXE) jacks.c $(LIBOBJ) $(BASELIB)
 
+sombrero$(EXE):		$(LIBOBJ) sombrero.c
+		$(CC) -o sombrero$(EXE) sombrero.c $(LIBOBJ) $(BASELIB)
+
+nurbtst$(EXE):		$(LIBOBJ) nurbtst.c
+		$(CC) -o nurbtst$(EXE) nurbtst.c $(LIBOBJ) $(BASELIB)
+
 clean:
-	rm -f balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells jacks
+	rm -f balls gears mount rings teapot tetra tree \
+		readdxf readnff readobj \
+		sample lattice shells jacks sombrero nurbtst
 	rm -f $(LIBOBJ)

@@ -1,7 +1,7 @@
 /*
  * lib.h - library definitions
  *
- * Author:  Eric Haines, 3D/Eye, Inc.
+ * Author:  Eric Haines
  *
  * Modified: 1 October 1992
  *           Alexander R. Enzmann
@@ -116,6 +116,16 @@
  *           rotate/scale/translate from a transform matrix. Modified
  *           computation of perspective view matrix to be a little cleaner.
  *
+ * Modified: 20 June 1995
+ *           Alexander R. Enzmann
+ *           Added code for 3D Metafile output (Apple Quickdraw 3D).  Added
+ *           output of NURBS (as triangular patches for most renderers).
+ *
+ * Modified: 6 January 1998  - Added PLATFORM_PROGRESS to allow UI platforms
+ *           to display a progress indicator if they want during generation,
+ *           Added ANSI_FN_DEFS flag to turn on or off K&R versus ANSI function
+ *           declarations.
+ *           Eduard [esp] Schwan
  */
 
 
@@ -130,30 +140,34 @@ extern "C" {
 #endif
 
 /* The version of this Library, see lib_get_version_str() */
-#define LIB_VERSION     "3.3"
+#define LIB_VERSION     "3.12"
 
 /* Raytracers supported by this package (default OUTPUT_POVRAY): */
 
 /* Note: any new renderers should be added between OUTPUT_VIDEO and
    OUTPUT_DELAYED.  These two values are used as a range check that a known
    renderer has been selected in "lib_set_raytracer" */
-#define OUTPUT_VIDEO      0 /* Output direct to the screen (sys dependent) */
-#define OUTPUT_NFF        1 /* MTV                                         */
-#define OUTPUT_POVRAY_10  2 /* POV-Ray 1.0                                 */
-#define OUTPUT_POLYRAY    3 /* Polyray v1.4 -> v1.8                        */
-#define OUTPUT_VIVID      4 /* Vivid 2.0                                   */
-#define OUTPUT_QRT        5 /* QRT 1.5                                     */
-#define OUTPUT_RAYSHADE   6 /* Rayshade                                    */
-#define OUTPUT_POVRAY_20  7 /* POV-Ray 2.0 (format is subject to change)   */
-#define OUTPUT_RTRACE     8 /* RTrace 8.0.0                                */
-#define OUTPUT_PLG        9 /* PLG format for use with REND386/Avril       */
-#define OUTPUT_RAWTRI    10 /* Raw triangle output                         */
-#define OUTPUT_ART       11 /* Art 2.3                                     */
-#define OUTPUT_RIB       12 /* RenderMan RIB format                        */
-#define OUTPUT_DXF       13 /* Autodesk DXF format                         */
-#define OUTPUT_OBJ       14 /* Wavefront OBJ format                        */
-#define OUTPUT_RWX       15 /* RenderWare RWX script file                  */
-#define OUTPUT_DELAYED   16 /* Needed for RTRACE/PLG output.
+#define OUTPUT_VIDEO      0 /* Output direct to the screen (sys dependent)  */
+#define OUTPUT_NFF        1 /* MTV                                          */
+#define OUTPUT_POVRAY_10  2 /* POV-Ray 1.0                                  */
+#define OUTPUT_POVRAY_20  3 /* POV-Ray 2.0                                  */
+#define OUTPUT_POVRAY_30  4 /* POV-Ray 3.1                                  */
+#define OUTPUT_POLYRAY    5 /* Polyray v1.4 -> v1.8                         */
+#define OUTPUT_VIVID      6 /* Vivid 2.0                                    */
+#define OUTPUT_QRT        7 /* QRT 1.5                                      */
+#define OUTPUT_RAYSHADE   8 /* Rayshade                                     */
+#define OUTPUT_RTRACE     9 /* RTrace 8.0.0                                 */
+#define OUTPUT_PLG       10 /* PLG format for use with REND386/Avril        */
+#define OUTPUT_RAWTRI    11 /* Raw triangle output                          */
+#define OUTPUT_ART       12 /* Art 2.3                                      */
+#define OUTPUT_RIB       13 /* RenderMan RIB format                         */
+#define OUTPUT_DXF       14 /* Autodesk DXF format                          */
+#define OUTPUT_OBJ       15 /* Wavefront OBJ format                         */
+#define OUTPUT_RWX       16 /* RenderWare RWX script file                   */
+#define OUTPUT_3DMF      17 /* 3D Metafile (Apple Quickdraw 3D text format) */
+#define OUTPUT_VRML1     18 /* Virtual Reality Modeling Language 1.0        */
+#define OUTPUT_VRML2     19 /* Virtual Reality Modeling Language 2.0        */
+#define OUTPUT_DELAYED   20 /* Needed for RTRACE/PLG output.
 			       When this is used, all definitions will be
 			       stored rather than immediately dumped.  When
 			       all definitions are complete, use the call
@@ -163,9 +177,9 @@ extern "C" {
 #define OUTPUT_RT_DEFAULT   OUTPUT_NFF
 
 /* Sets raw triangle output format to include texture name */
-#define RAWTRI_WITH_TEXTURES    0       /* set to 1 to include texture */
+#define RAWTRI_WITH_TEXTURES    0       /* set to 1 to include texture in RAW files */
 
-#define OUTPUT_RESOLUTION       4       /* default amount of polygonalization */
+#define OUTPUT_RESOLUTION       3       /* default amount of polygonalization */
 
 
 /* ========== don't mess from here on down ============================= */
@@ -183,6 +197,9 @@ extern "C" {
    internally.  For some renderers, you need to build the data file according
    to a particular scheme (notably RTrace).  These data types are used to
    hold the objects, lights, etc. until it is time to build the file.  */
+
+/* Forward declaration of a pointer to a generic object */
+typedef struct object_struct *object_ptr;
 
 /* Type definition for holding a light */
 typedef struct light_struct *light_ptr;
@@ -254,6 +271,25 @@ struct torus_struct {
    double iradius, oradius;
    };
 
+/* Define a NURB patch */
+struct nurb_struct {
+   int rat_flag;              /* Does this patch have any rational vertices */
+   int norder, npts, nknots;
+   int morder, mpts, mknots;
+   float *nknotvec, *mknotvec;
+   COORD4 **ctlpts;
+   };
+
+#define CSG_UNION        1
+#define CSG_INTERSECTION 2
+#define CSG_DIFFERENCE   3
+
+/* Operator, list operand objects */
+struct csg_struct {
+   int csg_operation, object_count;
+   object_ptr objects;
+   };
+
 /* Standard viewpoint stuff */
 typedef struct {
    COORD3 from, at, up;
@@ -263,18 +299,19 @@ typedef struct {
    } viewpoint;
 
 /*-----------------------------------------------------------------*/
-#define BOX_OBJ       1
-#define CONE_OBJ      2
-#define DISC_OBJ      3
-#define HEIGHT_OBJ    4
-#define POLYGON_OBJ   5
-#define POLYPATCH_OBJ 6
-#define SPHERE_OBJ    7
-#define SUPERQ_OBJ    8
-#define TORUS_OBJ     9
+#define BOX_OBJ        1
+#define CONE_OBJ       2
+#define DISC_OBJ       3
+#define HEIGHT_OBJ     4
+#define POLYGON_OBJ    5
+#define POLYPATCH_OBJ  6
+#define SPHERE_OBJ     7
+#define SUPERQ_OBJ     8
+#define TORUS_OBJ      9
+#define NURB_OBJ      10
+#define CSG_OBJ       11
 
 /* Union of all the object types */
-typedef struct object_struct *object_ptr;
 struct object_struct {
    unsigned int object_type;  /* Identify what kind of object */
    unsigned int curve_format; /* Output as surface or as polygons? */
@@ -290,6 +327,8 @@ struct object_struct {
       struct sphere_struct    sphere;
       struct superq_struct    superq;
       struct torus_struct     torus;
+      struct nurb_struct      nurb;
+      struct csg_struct       csg;
       } object_data;
    object_ptr next_object;
    };
@@ -303,15 +342,17 @@ extern FILE * gStdout_file;
 #define gStdout_file stdout
 #endif /* OUTPUT_TO_FILE */
 
+#define MAX_OUTFILE_NAME_SIZE  80
 /*
 Here are some local variables that are used to control things like
 the current output file, current texture, ...
 */
 extern FILE *gOutfile;
+extern char gOutfileName[MAX_OUTFILE_NAME_SIZE];
 extern char *gTexture_name;
 extern int  gTexture_count;
 extern double gTexture_ior;
-extern int gObject_count;
+extern int  gObject_count;
 extern int  gRT_out_format;
 extern int  gRT_orig_format;
 extern int  gU_resolution;
@@ -391,8 +432,8 @@ void axis_to_z PARAMS((COORD3 axis, double *xang, double *yang));
  *   Yon is "at infinity."
  */
 void lib_output_viewpoint PARAMS((COORD3 from, COORD3 at, COORD3 up,
-				  double fov_angle, double aspect_ratio,
-				  double hither, int resx, int resy));
+								 double fov_angle, double aspect_ratio,
+								 double hither, int resx, int resy));
 
 
 /*
@@ -433,8 +474,8 @@ void lib_output_background_color PARAMS((COORD3 color));
  *
  */
 char *lib_output_color PARAMS((char *name, COORD3 color, double ka,
-			       double kd, double ks, double shine,
-			       double ang, double kt, double i_of_r));
+							  double kd, double ks, double shine,
+							  double ang, double kt, double i_of_r));
 
 
 
@@ -458,13 +499,13 @@ char *lib_output_color PARAMS((char *name, COORD3 color, double ka,
  * lib_output_polypatch.
  */
 void lib_output_cylcone PARAMS((COORD4 base_pt, COORD4 apex_pt,
-				int curve_format));
+							   int curve_format));
 
 
 /*-----------------------------------------------------------------*/
 void lib_output_disc PARAMS((COORD3 center, COORD3 normal,
-			     double iradius, double oradius,
-			     int curve_format));
+							double iradius, double oradius,
+							int curve_format));
 
 
 /*-----------------------------------------------------------------*/
@@ -492,20 +533,26 @@ void lib_output_box PARAMS((COORD3 point1, COORD3 point2));
 
 /*-----------------------------------------------------------------*/
 void lib_output_sq_sphere PARAMS((COORD4 center_pt, double a1, double a2,
-				  double a3, double n, double e));
+								 double a3, double n, double e,
+								 int curve_format));
 
 
 /*==== Prototypes from libpr3.c ====*/
 
 /*-----------------------------------------------------------------*/
 void lib_output_height PARAMS((char *, float **, int, int,
-			       double, double, double, double, double, double));
+							  double, double, double, double, double, double));
 
 
 /*-----------------------------------------------------------------*/
 void lib_output_torus PARAMS((COORD3 center, COORD3 normal,
-			      double iradius, double oradius,
-			      int curve_format));
+							 double iradius, double oradius,
+							 int curve_format));
+/*-----------------------------------------------------------------*/
+void
+lib_output_nurb PARAMS((int norder, int npts, int morder, int mpts,
+					   float *nknots, float *mknots, COORD4 **ctlpts,
+					   int curve_format));
 
 
 /*==== Prototypes from libini.c ====*/
@@ -534,14 +581,14 @@ void    lib_flush_definitions PARAMS((void));
 
 void    lib_output_polygon_cylcone PARAMS((COORD4 base_pt, COORD4 apex_pt));
 void    lib_output_polygon_disc PARAMS((COORD3 center, COORD3 normal,
-				                        double iradius, double oradius));
+									   double iradius, double oradius));
 void    lib_output_polygon_sphere PARAMS((COORD4 center_pt));
 void    lib_output_polygon_height PARAMS((int height, int width, float **data,
-				                        double x0, double x1,
-				                        double y0, double y1,
-				                        double z0, double z1));
+										 double x0, double x1,
+										 double y0, double y1,
+										 double z0, double z1));
 void    lib_output_polygon_torus PARAMS((COORD3 center, COORD3 normal,
-				                        double iradius, double oradius));
+										double iradius, double oradius));
 void    lib_output_polygon_box PARAMS((COORD3 p1, COORD3 p2));
 void    lib_output_polygon PARAMS((int tot_vert, COORD3 vert[]));
 void    lib_output_polypatch PARAMS((int tot_vert, COORD3 vert[], COORD3 norm[]));

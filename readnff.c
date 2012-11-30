@@ -27,10 +27,10 @@ static void
 show_error(s)
 char	* s;
 {
-	/* SysBeep(1); */
-	lib_output_comment("### ERROR! ###\n");
-	lib_output_comment(s);
-	lib_close();
+    /* SysBeep(1); */
+    lib_output_comment("### ERROR! ###\n");
+    lib_output_comment(s);
+    lib_close();
 }
 
 /*----------------------------------------------------------------------
@@ -47,15 +47,15 @@ static void
 do_comment(fp)
 FILE *fp;
 {
-	char	*cp;
-	char	comment[256];
-
-	fgets(comment, 255, fp);
-	/* strip out newline */
-	cp = (char*)strchr(comment, '\n');
-	if (cp != NULL)
+    char	*cp;
+    char	comment[256];
+	
+    fgets(comment, 255, fp);
+    /* strip out newline */
+    cp = (char*)strchr(comment, '\n');
+    if (cp != NULL)
 		*cp = '\0';
-	lib_output_comment(comment);
+    lib_output_comment(comment);
 }
 
 
@@ -104,44 +104,44 @@ static void
 do_view(fp)
 FILE *fp;
 {
-	float	x,y,z;
-	COORD3 from;
-	COORD3 at;
-	COORD3 up;
-	float fov_angle;
-	float aspect_ratio;
-	float hither;
-	int resx;
-	int resy;
-
-	if (fscanf(fp, " from %f %f %f", &x, &y, &z) != 3)
+    float    x,y,z;
+    COORD3 from;
+    COORD3 at;
+    COORD3 up;
+    float fov_angle;
+    float aspect_ratio;
+    float hither;
+    int resx;
+    int resy;
+	
+    if (fscanf(fp, " from %f %f %f", &x, &y, &z) != 3)
 		goto fmterr;
-	SET_COORD3(from, x,y,z);
-
-	if (fscanf(fp, " at %f %f %f", &x, &y, &z) != 3)
+    SET_COORD3(from, x,y,z);
+	
+    if (fscanf(fp, " at %f %f %f", &x, &y, &z) != 3)
 		goto fmterr;
-	SET_COORD3(at, x,y,z);
-
-	if (fscanf(fp, " up %f %f %f", &x, &y, &z) != 3)
+    SET_COORD3(at, x,y,z);
+	
+    if (fscanf(fp, " up %f %f %f", &x, &y, &z) != 3)
 		goto fmterr;
-	SET_COORD3(up, x,y,z);
-
-	if (fscanf(fp, " angle %f", &fov_angle) != 1)
+    SET_COORD3(up, x,y,z);
+	
+    if (fscanf(fp, " angle %f", &fov_angle) != 1)
 		goto fmterr;
-
-	fscanf(fp, " hither %f", &hither);
-
-	aspect_ratio = 1.0;
-
-	fscanf(fp, " resolution %d %d", &resx, &resy);
-
-	lib_output_viewpoint(from, at, up,
-				  fov_angle, aspect_ratio,
-				  hither, resx, resy);
-	return;
+	
+    fscanf(fp, " hither %f", &hither);
+	
+    aspect_ratio = (float)1.0;
+	
+    fscanf(fp, " resolution %d %d", &resx, &resy);
+	
+    lib_output_viewpoint(from, at, up,
+		fov_angle, aspect_ratio,
+		hither, resx, resy);
+    return;
 fmterr:
-	show_error("NFF view syntax error");
-	exit(1);
+    show_error("NFF view syntax error");
+    exit(1);
 }
 
 
@@ -161,17 +161,17 @@ static void
 do_light(fp)
 FILE *fp;
 {
-	float	x, y, z;
-	COORD4 acenter;
-
-   if (fscanf(fp, "%f %f %f",&x, &y, &z) != 3) {
-	show_error("Light source syntax error");
-	exit(1);
-	}
-
-	SET_COORD4(acenter,x,y,z,0.0); /* intensity=0 */
-
-	lib_output_light(acenter);
+    float    x, y, z;
+    COORD4 acenter;
+	
+    if (fscanf(fp, "%f %f %f",&x, &y, &z) != 3) {
+		show_error("Light source syntax error");
+		exit(1);
+    }
+	
+    SET_COORD4(acenter,x,y,z,0.0); /* intensity=0 */
+	
+    lib_output_light(acenter);
 }
 
 
@@ -188,16 +188,16 @@ static void
 do_background(fp)
 FILE *fp;
 {
-	float	r, g, b;
-	COORD3 acolor;
-
-   if (fscanf(fp, "%f %f %f",&r, &g, &b) != 3) {
-	show_error("background color syntax error");
-	exit(1);
-	}
-	SET_COORD3(acolor,r,g,b);
-
-	lib_output_background_color(acolor);
+    float    r, g, b;
+    COORD3 acolor;
+	
+    if (fscanf(fp, "%f %f %f",&r, &g, &b) != 3) {
+		show_error("background color syntax error");
+		exit(1);
+    }
+    SET_COORD3(acolor,r,g,b);
+	
+    lib_output_background_color(acolor);
 }
 
 
@@ -224,28 +224,28 @@ static void
 do_fill(fp)
 FILE *fp;
 {
-	float	r, g, b, ka, kd, ks, shine, phong_pow, ang, t, ior;
-	COORD3 acolor;
-
-   if (fscanf(fp, "%f %f %f",&r, &g, &b) != 3) {
-	show_error("fill color syntax error");
-	exit(1);
-	}
-	SET_COORD3(acolor,r,g,b);
-
-	if (fscanf(fp, "%f %f %f %f %f", &kd, &ks, &phong_pow, &t, &ior) != 5) {
+    float    r, g, b, ka, kd, ks, shine, phong_pow, ang, t, ior;
+    COORD3 acolor;
+	
+    if (fscanf(fp, "%f %f %f",&r, &g, &b) != 3) {
+		show_error("fill color syntax error");
+		exit(1);
+    }
+    SET_COORD3(acolor,r,g,b);
+	
+    if (fscanf(fp, "%f %f %f %f %f", &kd, &ks, &phong_pow, &t, &ior) != 5) {
 		show_error("fill material syntax error");
 		exit(1);
-	}
-
-	/* ooh yuck, some parms not input in NFF, so I hard-coded them for now [esp] */
-	ka = 0.1;
-	shine = 0.5;
-	/* convert phong_pow back into phong hilite angle. */
-	/* reciprocal of formula in libprm.c, lib_output_color() */
-	ang = (180.0/(2.0*PI)) * acos( exp((-log(2.0))/phong_pow) );
-	lib_output_color(NULL, acolor, ka, kd, ks, shine, ang, t, ior);
-
+    }
+	
+    /* ooh yuck, some parms not input in NFF, so I hard-coded them for now [esp] */
+    ka = (float)0.1;
+    shine = (float)0.5;
+    /* convert phong_pow back into phong hilite angle. */
+    /* reciprocal of formula in libprm.c, lib_output_color() */
+    ang = (float)((180.0/(2.0*PI)) * acos( exp((-log(2.0))/phong_pow) ));
+    lib_output_color(NULL, acolor, ka, kd, ks, shine, ang, t, ior);
+	
 }
 
 
@@ -275,23 +275,23 @@ static void
 do_cone(fp)
 FILE *fp;
 {
-	COORD4	base_pt;
-	COORD4	apex_pt;
-	float	x0, y0, z0, x1, y1, z1, r0, r1;
-
-	if (fscanf(fp, " %f %f %f %f %f %f %f %f", &x0, &y0, &z0, &r0,
-			&x1, &y1, &z1, &r1) != 8) {
+    COORD4    base_pt;
+    COORD4    apex_pt;
+    float    x0, y0, z0, x1, y1, z1, r0, r1;
+	
+    if (fscanf(fp, " %f %f %f %f %f %f %f %f", &x0, &y0, &z0, &r0,
+		&x1, &y1, &z1, &r1) != 8) {
 		show_error("cylinder or cone syntax error");
 		exit(1);
-	}
-	if ( r0 < 0.0) {
+    }
+    if ( r0 < 0.0) {
 		r0 = -r0;
 		r1 = -r1;
-	}
-	SET_COORD4(base_pt,x0,y0,z0,r0);
-	SET_COORD4(apex_pt,x1,y1,z1,r1);
-
-	lib_output_cylcone (base_pt, apex_pt, output_format);
+    }
+    SET_COORD4(base_pt,x0,y0,z0,r0);
+    SET_COORD4(apex_pt,x1,y1,z1,r1);
+	
+    lib_output_cylcone (base_pt, apex_pt, output_format);
 }
 
 
@@ -309,17 +309,17 @@ static void
 do_sphere(fp)
 FILE *fp;
 {
-	float	x, y, z, r;
-	COORD4	center_pt;
-
-	if (fscanf(fp, "%f %f %f %f", &x, &y, &z, &r) != 4) {
+    float    x, y, z, r;
+    COORD4    center_pt;
+	
+    if (fscanf(fp, "%f %f %f %f", &x, &y, &z, &r) != 4) {
 		show_error("sphere syntax error");
 		exit(1);
-	}
-
-	SET_COORD4(center_pt,x,y,z,r);
-
-	lib_output_sphere(center_pt, output_format);
+    }
+	
+    SET_COORD4(center_pt,x,y,z,r);
+	
+    lib_output_sphere(center_pt, output_format);
 }
 
 
@@ -358,62 +358,62 @@ static void
 do_poly(fp)
 FILE *fp;
 {
-	int	ispatch;
-	int	nverts;
-	int	vertcount;
-	COORD3 *verts;
-	COORD3 *norms;
-	float	x, y, z;
-
-	ispatch = getc(fp);
-	if (ispatch != 'p') {
+    int    ispatch;
+    int    nverts;
+    int    vertcount;
+    COORD3 *verts;
+    COORD3 *norms;
+    float    x, y, z;
+	
+    ispatch = getc(fp);
+    if (ispatch != 'p') {
 		ungetc(ispatch, fp);
 		ispatch = 0;
-	}
-
-	if (fscanf(fp, "%d", &nverts) != 1)
+    }
+	
+    if (fscanf(fp, "%d", &nverts) != 1)
 		goto fmterr;
-
-	verts = (COORD3*)malloc(nverts*sizeof(COORD3));
-	if (verts == NULL)
+	
+    verts = (COORD3*)malloc(nverts*sizeof(COORD3));
+    if (verts == NULL)
 		goto memerr;
-
-	if (ispatch) {
+	
+    if (ispatch) {
 		norms = (COORD3*)malloc(nverts*sizeof(COORD3));
 		if (norms == NULL)
 			goto memerr;
-	}
-
-	/* read all the vertices into temp array */
-	for (vertcount = 0; vertcount < nverts; vertcount++) {
+    }
+	
+    /* read all the vertices into temp array */
+    for (vertcount = 0; vertcount < nverts; vertcount++) {
 		if (fscanf(fp, " %f %f %f", &x, &y, &z) != 3)
 			goto fmterr;
 		SET_COORD3(verts[vertcount],x,y,z);
-
+		
 		if (ispatch) {
 			if (fscanf(fp, " %f %f %f", &x, &y, &z) != 3)
 				goto fmterr;
 			SET_COORD3(norms[vertcount],x,y,z);
 		}
-	}
-
-	/* write output */
-	if (ispatch)
+    }
+	
+    /* write output */
+    if (ispatch)
 		lib_output_polypatch(nverts, verts, norms);
-	else
+    else
 		lib_output_polygon(nverts, verts);
-
-	free(verts);
-	if (ispatch)
+	
+    free(verts);
+    if (ispatch)
 		free(norms);
-
-	return;
+	
+    return;
 fmterr:
-	show_error("polygon or patch syntax error");
-	exit(1);
+    show_error("polygon or patch syntax error");
+    exit(1);
 memerr:
-	show_error("can't allocate memory for polygon or patch");
-	exit(1);
+    show_error("can't allocate memory for polygon or patch");
+    exit(1);
 }
 
 
@@ -423,44 +423,44 @@ static void
 parse_nff(fp)
 FILE *fp;
 {
-	int		c;
-
-	while ( (c = getc(fp)) != EOF )
+    int        c;
+	
+    while ( (c = getc(fp)) != EOF )
 		switch (c) {
-		case ' ':			/* white space */
-		case '\t':
-		case '\n':
-		case '\f':
-		case '\r':
-			continue;
-		case '#':			/* comment */
-			do_comment(fp);
-			break;
-		case 'v':			/* view point */
-			do_view(fp);
-			break;
-		case 'l':			/* light source */
-			do_light(fp);
-			break;
-		case 'b':			/* background color */
-			do_background(fp);
-			break;
-		case 'f':			/* fill material */
-			do_fill(fp);
-			break;
-		case 'c':			/* cylinder or cone */
-			do_cone(fp);
-			break;
-		case 's':			/* sphere */
-			do_sphere(fp);
-			break;
-		case 'p':			/* polygon or patch */
-			do_poly(fp);
-			break;
-		default:			/* unknown */
-			show_error("unknown NFF primitive code");
-			exit(1);
-		}
+	case ' ':            /* white space */
+	case '\t':
+	case '\n':
+	case '\f':
+	case '\r':
+		continue;
+	case '#':            /* comment */
+		do_comment(fp);
+		break;
+	case 'v':            /* view point */
+		do_view(fp);
+		break;
+	case 'l':            /* light source */
+		do_light(fp);
+		break;
+	case 'b':            /* background color */
+		do_background(fp);
+		break;
+	case 'f':            /* fill material */
+		do_fill(fp);
+		break;
+	case 'c':            /* cylinder or cone */
+		do_cone(fp);
+		break;
+	case 's':            /* sphere */
+		do_sphere(fp);
+		break;
+	case 'p':            /* polygon or patch */
+		do_poly(fp);
+		break;
+	default:            /* unknown */
+		show_error("unknown NFF primitive code");
+		exit(1);
+	}
 } /* parse_nff */
 
 
@@ -468,38 +468,38 @@ FILE *fp;
 ----------------------------------------------------------------------*/
 int
 main(argc,argv)
-    int argc ;
-    char *argv[] ;
+int argc ;
+char *argv[] ;
 {
     char file_name[64];
     FILE *fp;
-
+	
     PLATFORM_INIT(SPD_READNFF);
-
+	
     /* Start by defining which raytracer we will be using */
     if ( lib_read_get_opts( argc, argv,
-			&raytracer_format, &output_format, file_name ) ) {
-	return EXIT_FAIL;
+		&raytracer_format, &output_format, file_name ) ) {
+		return EXIT_FAIL;
     }
-
-    if ( lib_open( raytracer_format, "ReadNFF.out" ) ) {
-	return EXIT_FAIL;
+	
+    if ( lib_open( raytracer_format, "ReadNFF" ) ) {
+		return EXIT_FAIL;
     }
-
+	
     fp = fopen(file_name, "r");
     if (fp == NULL) {
-	fprintf(stderr, "Cannot open nff file: '%s'\n", file_name);
-	return EXIT_FAIL;
+		fprintf(stderr, "Cannot open nff file: '%s'\n", file_name);
+		return EXIT_FAIL;
     }
-
-    lib_set_polygonalization(3, 3);
-
+	
+    /*lib_set_polygonalization(3, 3);*/
+	
     parse_nff(fp);
-
+	
     fclose(fp);
-
+	
     lib_close();
-
+	
     PLATFORM_SHUTDOWN();
     return EXIT_SUCCESS;
 }

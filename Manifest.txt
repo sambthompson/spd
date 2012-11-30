@@ -1,16 +1,16 @@
-SPD 3.6 Enhanced contains the following files:
+The SPD distribution contains the following files:
 
-    MANIFEST - what you are now reading
-    README.1st - readme file for the SPD enhancements
-    README - readme file for what the SPD is about
-    README.MAC - Macintosh version notes
-    NFF.DOC - a description of the Neutral File Format used in the SPD
+    Manifest.txt - what you are now reading
+    Readme.txt - readme file for what the SPD is about
+    NFF.txt - a description of the Neutral File Format used in the SPD
+    overview.htm - the web page at http://www.acm.org/tog/resources/SPD/
 
-    makefile.hp  - Hewlett Packard HPUX makefile (includes X11 displayer)
-    makefile.ib2 - IBM PC Zortech makefile
-    makefile.ibm - IBM PC "generic" makefile
-    makefile.unx - Unix makefile
+    makefile - generic makefile (no display possible), same as null makefile
     makefile.dj  - IBM PC DJGPP+GRX makefile
+    makefile.dos - IBM PC DOS generic makefile
+    makefile.hp  - Hewlett Packard HPUX makefile (includes X11 displayer)
+    makefile.nul - null makefile (default generic)
+    makefile.x11 - X11R6 makefile
 
     def.h - some useful "C" definitions
     lib.h - globals and conversion/output library routine declarations
@@ -39,20 +39,24 @@ SPD 3.6 Enhanced contains the following files:
     drv_hp.c - HP Starbase/X11 display driver
     drv_ibm.c - IBM PC VGA display driver
     drv_mac.c - Macintosh display driver
-    drv_unix.c - generic Unix driver template (usable, but does not display)
-    drv_zrtc.c - Zortech graphics display driver
+    drv_null.c - generic driver template (usable, but does not display)
+    drv_x11.c - X11R6 graphics display driver
 
     readdxf.c - DXF file reader/displayer/converter
     readnff.c - NFF file reader/displayer/converter
     readobj.c - Wavefront OBJ file reader/displayer/converter
     view.dat - view for DXF and OBJ displayer
-    f117.dxf - sample DXF file; F117 plane
-    skull.dxf - sample DXF file; skull
+    spd.sl - material for RIB export
 
     sample.c - an example file showing a simple scene
     lattice.c - cubic lattice generator
     shells.c - "shell" generator (but don't try to look inside!)
     sombrero.c - hat function heightfield output example
-    jacks.c - recursive jacks, by Alexander Enzmann
+    jacks.c - recursive jacks
+    nurbtst.c - NURBS routine tester
 
-[eof]
+    f117.dxf - sample DXF file; F117 plane
+    f15.obj - sample Wavefront OBJ file; F15 plane
+    skull.dxf - sample DXF file; skull
+
+[end]
