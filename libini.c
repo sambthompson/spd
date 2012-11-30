@@ -3,6 +3,9 @@
  *
  * Author:  Eric Haines
  *
+ * Modified: 1 December 2012  - Support for database name/size globals.
+ *           Sam [sbt] Thompson
+ *
  */
 
 /*-----------------------------------------------------------------*/
@@ -51,6 +54,8 @@ static char	*gFnameSuffix[OUTPUT_DELAYED+1] =
 ".out", /* OUTPUT_DELAYED    Needed for RTRACE/PLG output.               */
 };
 #endif
+char *gDatabaseName = NULL;
+int  gDatabaseSizeFactor = 0;
 
 /*-----------------------------------------------------------------*/
 /* Library initialization/teardown functions */
@@ -293,6 +298,41 @@ void show_read_usage PARAMS((void))
 } /* show_read_usage */
 
 
+#ifdef ANSI_FN_DEF
+char *lib_get_core_name(char *filepath)
+#else
+char *lib_get_core_name(filepath)
+char *filepath;
+#endif
+{
+    char *filename, *filecore, *fileext;
+    int ext_len, core_len;
+
+    /* skip over any leading path segments */
+    filecore = strrchr(filepath, '/');
+    if (filecore == NULL)
+    	filecore = strrchr(filepath, '\\');
+    if (filecore == NULL)
+    	filecore = filepath;
+    else filecore = filecore + 1;
+    
+    /* now remove extensions (last .+ ) */
+    fileext = strrchr(filecore, '.');
+    if (fileext != NULL) { /* extension */
+    	core_len = strlen(filecore) - strlen(fileext);
+    	filename = filecore;
+    	filecore = (char*)malloc((core_len + 1) * sizeof(char));
+    	if (filecore == NULL)
+    		filecore = filename; /* fail gracefully */
+    	else {
+    		strncpy(filecore, filename, core_len);
+    		filecore[core_len] = (char)0;
+    	}
+    }
+    return filecore;
+}
+
+
 /*-----------------------------------------------------------------*/
 /*
  * Command line option parser for db generator
@@ -389,6 +429,10 @@ int     *p_size, *p_rdr, *p_curve ;
 			return( TRUE ) ;
 		}
     }
+
+	gDatabaseName = lib_get_core_name(argv[0]);
+	gDatabaseSizeFactor = *p_size;
+	
     return( FALSE ) ;
 }
 
@@ -484,6 +528,10 @@ char *p_infname;
 		show_read_usage();
 		return( TRUE ) ;
 	}
+	
+	gDatabaseName = lib_get_core_name(p_infname);
+	gDatabaseSizeFactor = 0;
+	
     return( FALSE ) ;
 }
 

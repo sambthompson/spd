@@ -3,6 +3,9 @@
  *
  * Author:  Alexander Enzmann
  *
+ * Modified: 1 December 2012  - Fixed misc warnings
+ *           Sam [sbt] Thompson
+ *
  */
 
 
@@ -21,7 +24,7 @@
 /* defines/constants section */
 
 typedef struct tx_struct *tx_ptr;
-typedef struct tx_struct {
+struct tx_struct {
    MATRIX tx;
    tx_ptr next;
    };
@@ -177,7 +180,7 @@ lib_output_tx_sequence()
 		break;
 		
 	case OUTPUT_RTRACE:
-		fprintf(gOutfile, "65 %ld ", gObject_count+1);
+		fprintf(gOutfile, "65 %d ", gObject_count+1);
 		for (i=0;i<4;i++)
 			for (j=0;j<4;j++)
 				fprintf(gOutfile, "%g ", txmat[j][i]);

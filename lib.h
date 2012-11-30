@@ -126,6 +126,15 @@
  *           Added ANSI_FN_DEFS flag to turn on or off K&R versus ANSI function
  *           declarations.
  *           Eduard [esp] Schwan
+ *
+ * Modified: 1 December 2012  - Support for MSVC and MinGW under Windows,
+ *           clang under MacOSX (fixed non-const stdout and misc warnings).
+ *           Minor corrections. Fixes to NURBS output for OUTPUT_DELAYED.
+ *           Fixes to torus output for OUTPUT_RIB. Fix height field output for
+ *           PLG. Support for naming and re-use of materials for delayed output
+ *           formats.
+ *           Sam [sbt] Thompson
+ *
  */
 
 
@@ -140,7 +149,7 @@ extern "C" {
 #endif
 
 /* The version of this Library, see lib_get_version_str() */
-#define LIB_VERSION     "3.13"
+#define LIB_VERSION     "3.15"
 
 /* Raytracers supported by this package (default OUTPUT_POVRAY): */
 
@@ -350,6 +359,7 @@ the current output file, current texture, ...
 extern FILE *gOutfile;
 extern char gOutfileName[MAX_OUTFILE_NAME_SIZE];
 extern char *gTexture_name;
+extern int  gTexture_max_count;
 extern int  gTexture_count;
 extern double gTexture_ior;
 extern int  gObject_count;
@@ -362,6 +372,8 @@ extern COORD3 gFgnd_color;
 extern double gView_bounds[2][3];
 extern int gView_init_flag;
 extern char *gLib_version_str;
+extern char *gDatabaseName;
+extern int  gDatabaseSizeFactor;
 
 extern surface_ptr gLib_surfaces;
 extern object_ptr gLib_objects;
@@ -403,7 +415,8 @@ void    lib_set_output_file PARAMS((FILE *new_outfile));
 void    lib_set_default_texture PARAMS((char *default_texture));
 void    lib_set_raytracer PARAMS((int default_tracer));
 void    lib_set_polygonalization PARAMS((int u_steps, int v_steps));
-void    lookup_surface_stats PARAMS((int index, int *tcount, double *tior));
+void    lookup_surface_stats PARAMS((int index, int *tcount, double *tior,
+                                    char **tname));
 
 
 /*==== Prototypes from libpr1.c ====*/
@@ -568,6 +581,8 @@ void    lib_storage_shutdown PARAMS((void));
 
 void    show_gen_usage PARAMS((void));
 void    show_read_usage PARAMS((void));
+
+char	*lib_get_core_name PARAMS((char *filepath));
 
 int     lib_gen_get_opts PARAMS((int argc, char *argv[],
 				 int *p_size, int *p_rdr, int *p_curve));

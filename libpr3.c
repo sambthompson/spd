@@ -4,6 +4,10 @@
  *
  * Author:  Eric Haines
  *
+ * Modified: 1 December 2012  - correct memory handling for delayed output
+ *           Correct RIB output for toruses.
+ *           Sam [sbt] Thompson
+ *
  */
 
 /*-----------------------------------------------------------------*/
@@ -119,8 +123,10 @@ double z0, z1;
     object_ptr new_object;
 	
     if (gRT_out_format == OUTPUT_DELAYED) {
+		/* None of the delayed output RTs need to do this here. The data is
+		 * saved in "data" pointer anyway.
 		filename = create_height_file(filename, height, width, data, 0);
-		if (filename == NULL) return;
+		if (filename == NULL) return; */
 		
 		/* Save all the pertinent information */
 		new_object = (object_ptr)malloc(sizeof(struct object_struct));
@@ -339,6 +345,7 @@ int curve_format;
 		case OUTPUT_OBJ:
 		case OUTPUT_RTRACE:
 		case OUTPUT_RAWTRI:
+		case OUTPUT_RIB:
 		case OUTPUT_DXF:
 		case OUTPUT_RWX:
 		case OUTPUT_VRML1:
@@ -837,6 +844,7 @@ int curve_format;
     float *nknotvec, *mknotvec;
     COORD4 **points;
     int rat_flag, nknots, mknots, i, j;
+    rat_flag = 0;
 	
     /* Copy the data into local structures. Build the knot vectors if
 	   they weren't passed in. */
@@ -917,6 +925,10 @@ int curve_format;
 			morder, mpts, mknots, mknotvec,
 			points, rat_flag);
     }
+	
+	/* Don't free locals if output delayed; they're now in the cache. */
+	if (gRT_out_format == OUTPUT_DELAYED)
+		return;
 	
     for (i=npts-1;i>=0;i--)
 		free(points[i]);

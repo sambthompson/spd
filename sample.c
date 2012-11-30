@@ -10,6 +10,10 @@
  *           passes the integer representation down to the subroutine which
  *           wants a double).
  *
+ * Modified: 1 December 2012  - correct sensible size factor (relevant to
+ *           output naming)
+ *           Sam [sbt] Thompson
+ *
  * size_factor is ignored.
  *
  *	size_factor	# spheres	# squares
@@ -24,7 +28,7 @@
 
 
 /* These may be read from the command line */
-static int size_factor      = 1;
+static int size_factor      = 0;
 static int raytracer_format = OUTPUT_RT_DEFAULT;
 static int output_format    = OUTPUT_CURVES;
 

@@ -3,6 +3,11 @@
  *
  * Author:  Alexander Enzmann
  *
+ * Modified: 1 December 2012  - correct sensible size factor (relevant to
+ *           output naming). Fix yellow/magenta mix up. Make image size match
+ *           other dbs (512x512)
+ *           Sam [sbt] Thompson
+ *
  * size_factor is ignored.
  *
  */
@@ -16,7 +21,7 @@
 
 
 /* These may be read from the command line */
-static int size_factor      = 1;
+static int size_factor      = 0;
 static int raytracer_format = OUTPUT_RT_DEFAULT;
 static int output_format    = OUTPUT_CURVES;
 
@@ -32,8 +37,8 @@ static COORD3 Red     = { 1.0, 0.0, 0.0 };
 static COORD3 Green   = { 0.0, 1.0, 0.0 };
 static COORD3 Blue    = { 0.0, 0.0, 1.0 };
 static COORD3 Cyan    = { 0.0, 1.0, 1.0 };
-static COORD3 Yellow  = { 1.0, 0.0, 1.0 };
-static COORD3 Magenta = { 1.0, 1.0, 0.0 };
+static COORD3 Magenta = { 1.0, 0.0, 1.0 };
+static COORD3 Yellow  = { 1.0, 1.0, 0.0 };
 static COORD3 Black   = { 0.0, 0.0, 0.0 };
 
 float nknots[] = {0, 0, 0, 0, 1.5, 1.5, 3, 3, 3, 3}; /* Non-uniform knot vector */
@@ -112,7 +117,7 @@ char *argv[];
     SET_COORD3(from, 0, 5, -10);
     SET_COORD3(at, 0, 0, 0);
     SET_COORD3(up, 0, 1, 0);
-    lib_output_viewpoint(from, at, up, 30.0, 1.0, 0.001, 256, 256);
+    lib_output_viewpoint(from, at, up, 30.0, 1.0, 0.001, 512, 512);
 	
     SET_COORD4(center, 0, 50, -10, 1.0);
     lib_output_light(center);

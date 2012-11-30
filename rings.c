@@ -6,6 +6,10 @@
  *
  * Author:  Eric Haines
  *
+ * Modified: 1 December 2012  - Fix vertex assignment - remove [W] assignment
+ *           (vertex is COORD3)
+ *           Sam [sbt] Thompson
+ *
  * size_factor determines the number of objects output.
  *	Each object has 30 cylinders and 30 spheres.
  *	Total objects = SF*SF + (SF-1)*(SF-1) + ... + 1 plus 1 backdrop square.
@@ -61,7 +65,6 @@ COORD3 vertex[30] ;
 		vertex[num_vertex][X] = scale * cos((double)num_vertex * 2.0*PI/5.0 ) ;
 		vertex[num_vertex][Y] = scale * sin((double)num_vertex * 2.0*PI/5.0 ) ;
 		vertex[num_vertex][Z] = 0.0 ;
-		vertex[num_vertex][W] = 1.0 ;
     }
 	
     /*

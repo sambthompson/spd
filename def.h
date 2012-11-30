@@ -21,6 +21,8 @@
  *           Alexander R. Enzmann
  * Modified: 6 January 1998  - Added PLATFORM_PROGRESS and ANSI_FN_DEF
  *           Eduard [esp] Schwan
+ * Modified: 1 December 2012  - Fix typo for COORD3
+ *           Sam [sbt] Thompson
  *
  */
 
@@ -184,7 +186,7 @@ typedef double MATRIX[4][4];  /* row major form */
 typedef double COORD3[3];
 typedef double COORD4[4];
 
-/* COORD3/COORD4 indeces */
+/* COORD3/COORD4 indices */
 #define X 0
 #define Y 1
 #define Z 2

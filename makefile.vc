@@ -1,0 +1,114 @@
+# generic makefile for standard procedural databases
+# Author:  Eric Haines
+#
+# Modified: 1 December 2012  - Adapted to support vc++
+#           Sam [sbt] Thompson
+#
+
+SUFEXE=.exe
+SUFOBJ=.obj
+CLCMD=del
+CC=cl.exe /c
+CC2=cl.exe /Fe
+
+EXEOBJ=balls$(SUFOBJ) gears$(SUFOBJ) mount$(SUFOBJ) rings$(SUFOBJ) \
+	teapot$(SUFOBJ) tetra$(SUFOBJ) tree$(SUFOBJ) \
+	readdxf$(SUFOBJ) readnff$(SUFOBJ) readobj$(SUFOBJ) \
+	sample$(SUFOBJ) lattice$(SUFOBJ) shells$(SUFOBJ) \
+	jacks$(SUFOBJ) sombrero$(SUFOBJ) nurbtst$(SUFOBJ)
+
+INC=def.h lib.h
+LIBOBJ=drv_null$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) \
+	libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) \
+	libvec$(SUFOBJ) libtx$(SUFOBJ)
+
+all:		balls$(SUFEXE) gears$(SUFEXE) mount$(SUFEXE) rings$(SUFEXE) \
+		teapot$(SUFEXE) tetra$(SUFEXE) tree$(SUFEXE) \
+		readdxf$(SUFEXE) readnff$(SUFEXE) readobj$(SUFEXE) \
+		sample$(SUFEXE) lattice$(SUFEXE) shells$(SUFEXE) \
+		jacks$(SUFEXE) sombrero$(SUFEXE) nurbtst$(SUFEXE)
+
+libobjs: $(LIBOBJ)
+
+drv_null$(SUFOBJ):	$(INC) drv_null.c drv.h
+		$(CC) drv_null.c
+
+libini$(SUFOBJ):	$(INC) libini.c
+		$(CC) libini.c
+
+libinf$(SUFOBJ):	$(INC) libinf.c
+		$(CC) libinf.c
+
+libpr1$(SUFOBJ):	$(INC) libpr1.c
+		$(CC) libpr1.c
+
+libpr2$(SUFOBJ):	$(INC) libpr2.c
+		$(CC) libpr2.c
+
+libpr3$(SUFOBJ):	$(INC) libpr3.c
+		$(CC) libpr3.c
+
+libply$(SUFOBJ):	$(INC) libply.c
+		$(CC) libply.c
+
+libdmp$(SUFOBJ):	$(INC) libdmp.c
+		$(CC) libdmp.c
+
+libvec$(SUFOBJ):	$(INC) libvec.c
+		$(CC) libvec.c
+
+libtx$(SUFOBJ):		$(INC) libtx.c
+		$(CC) libtx.c
+
+balls$(SUFEXE):		$(LIBOBJ) balls.c
+		$(CC2)balls$(SUFEXE) balls.c $(LIBOBJ) $(BASELIB)
+
+gears$(SUFEXE):		$(LIBOBJ) gears.c
+		$(CC2)gears$(SUFEXE) gears.c $(LIBOBJ) $(BASELIB)
+
+mount$(SUFEXE):		$(LIBOBJ) mount.c
+		$(CC2)mount$(SUFEXE) mount.c $(LIBOBJ) $(BASELIB)
+
+rings$(SUFEXE):		$(LIBOBJ) rings.c
+		$(CC2)rings$(SUFEXE) rings.c $(LIBOBJ) $(BASELIB)
+
+teapot$(SUFEXE):		$(LIBOBJ) teapot.c
+		$(CC2)teapot$(SUFEXE) teapot.c $(LIBOBJ) $(BASELIB)
+
+tetra$(SUFEXE):		$(LIBOBJ) tetra.c
+		$(CC2)tetra$(SUFEXE) tetra.c $(LIBOBJ) $(BASELIB)
+
+tree$(SUFEXE):		$(LIBOBJ) tree.c
+		$(CC2)tree$(SUFEXE) tree.c $(LIBOBJ) $(BASELIB)
+
+readdxf$(SUFEXE):		$(LIBOBJ) readdxf.c
+		$(CC2)readdxf$(SUFEXE) readdxf.c $(LIBOBJ) $(BASELIB)
+
+readnff$(SUFEXE):		$(LIBOBJ) readnff.c
+		$(CC2)readnff$(SUFEXE) readnff.c $(LIBOBJ) $(BASELIB)
+
+readobj$(SUFEXE):		$(LIBOBJ) readobj.c
+		$(CC2)readobj$(SUFEXE) readobj.c $(LIBOBJ) $(BASELIB)
+
+sample$(SUFEXE):		$(LIBOBJ) sample.c
+		$(CC2)sample$(SUFEXE) sample.c $(LIBOBJ) $(BASELIB)
+
+lattice$(SUFEXE):		$(LIBOBJ) lattice.c
+		$(CC2)lattice$(SUFEXE) lattice.c $(LIBOBJ) $(BASELIB)
+
+shells$(SUFEXE):		$(LIBOBJ) shells.c
+		$(CC2)shells$(SUFEXE) shells.c $(LIBOBJ) $(BASELIB)
+
+jacks$(SUFEXE):			$(LIBOBJ) jacks.c
+		$(CC2)jacks$(SUFEXE) jacks.c $(LIBOBJ) $(BASELIB)
+
+sombrero$(SUFEXE):		$(LIBOBJ) sombrero.c
+		$(CC2)sombrero$(SUFEXE) sombrero.c $(LIBOBJ) $(BASELIB)
+
+nurbtst$(SUFEXE):		$(LIBOBJ) nurbtst.c
+		$(CC2)nurbtst$(SUFEXE) nurbtst.c $(LIBOBJ) $(BASELIB)
+
+clean:
+	-for %i in ($(LIBOBJ) $(EXEOBJ)) do $(CLCMD) %i
+	-$(CLCMD) *$(SUFEXE)
+

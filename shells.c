@@ -16,6 +16,9 @@
  *     Corrected bug with light source definition
  *     Changed several vars from COORD4 to COORD3
  *
+ * Modified: 1 December 2012  - Added database name/size globals initialisation
+ *           Sam [sbt] Thompson
+ *
  * Size factor determines the number of objects output.
  *      Total objects = 180*(2**SF) spheres
  *
@@ -171,6 +174,10 @@ int     *p_size, *p_rdr, *p_curve ;
 			return( TRUE ) ;
 		}
     }
+	
+	gDatabaseName = lib_get_core_name(argv[0]);
+	gDatabaseSizeFactor = *p_size;
+	
     return( FALSE ) ;
 }
 

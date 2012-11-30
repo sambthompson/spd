@@ -4,6 +4,9 @@
  *
  * Author:  Eric Haines
  *
+ * Modified: 1 December 2012  - correct delayed output data storage for discs
+ *           Sam [sbt] Thompson
+ *
  */
 
 /*-----------------------------------------------------------------*/
@@ -901,7 +904,7 @@ int curve_format;
 		COPY_COORD3(new_object->object_data.disc.center, center);
 		COPY_COORD3(new_object->object_data.disc.normal, normal);
 		new_object->object_data.disc.iradius = iradius;
-		new_object->object_data.disc.iradius = oradius;
+		new_object->object_data.disc.oradius = oradius;
 		new_object->next_object = gLib_objects;
 		gLib_objects = new_object;
     } else if (curve_format == OUTPUT_CURVES) {

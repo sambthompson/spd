@@ -3,6 +3,10 @@
  *
  * Author:  Eric Haines
  *
+ * Modified: 1 December 2012  - Support for named textures.
+ *           Fix non-const initialiser.
+ *           Sam [sbt] Thompson
+ *
  */
 
 /*-----------------------------------------------------------------*/
@@ -30,8 +34,14 @@ FILE * gStdout_file = NULL;
 /*-----------------------------------------------------------------*/
 /* Here are some local variables that are used to control things like
    the current output file, current texture, ... */
+/* MS VC, MinGW and clang complain about non-const initialiser */
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__clang__)
+FILE *gOutfile      = NULL;
+#else
 FILE *gOutfile      = stdout;
+#endif
 char *gTexture_name = NULL;
+int  gTexture_max_count = 0;
 int  gTexture_count = 0;
 int  gObject_count = 0;
 double gTexture_ior = 1.0;
@@ -159,11 +169,12 @@ int u_steps, v_steps;
 
 /*-----------------------------------------------------------------*/
 #ifdef ANSI_FN_DEF
-void lookup_surface_stats(int index, int *tcount, double *tior)
+void lookup_surface_stats(int index, int *tcount, double *tior, char **tname)
 #else
-void lookup_surface_stats(index, tcount, tior)
+void lookup_surface_stats(index, tcount, tior, tname)
 int index, *tcount;
 double *tior;
+char **tname;
 #endif
 {
     surface_ptr temp_ptr = gLib_surfaces;
@@ -174,9 +185,11 @@ double *tior;
 		*tior = temp_ptr->ior;
 		if (*tior < 1.0) *tior = 1.0;
 		*tcount = temp_ptr->surf_index;
+		*tname = temp_ptr->surf_name;
     }
     else {
 		*tior = 1.0;
 		*tcount = 0;
+		*tname = NULL;
     }
 }

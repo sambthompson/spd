@@ -3,7 +3,8 @@
  *
  * Author:  Alexander Enzmann
  *
- * Modified:
+ * Modified: 1 December 2012  - Set image res to match other dbs (512x512)
+ *           Sam [sbt] Thompson
  *
  *      size_factor     # spheres       # squares
  *           x              xx               x
@@ -142,7 +143,7 @@ char *argv[];
     SET_COORD3(from, 0, 0, -8);
     SET_COORD3(at, 0, 0, 0);
     SET_COORD3(up, 0, 1, 0);
-    lib_output_viewpoint(from, at, up, 25.0, 1.0, 0.001, 256, 256);
+    lib_output_viewpoint(from, at, up, 25.0, 1.0, 0.001, 512, 512);
 	
     /*
 	 * For raytracers that don't scale the light intensity,

@@ -4,6 +4,11 @@
  *
  * Author:  Eric Haines
  *
+ * Modified: 1 December 2012  - Added support for re-using identical colours
+ *           if using delayed output. Changes to lib_output_color,
+ *           case OUTPUT_DELAYED. Added local lookup_surface_index function
+ *           Sam [sbt] Thompson
+ *
  */
 
 /*-----------------------------------------------------------------*/
@@ -920,6 +925,36 @@ int val;
 }
 
 /*-----------------------------------------------------------------*/
+#ifdef ANSI_FN_DEF
+static int lookup_surface_index(COORD3 color, double ka,
+								  double kd, double ks, double ks_spec,
+								  double ang, double kt, double i_of_r)
+#else
+static int lookup_surface_index(color, ka, kd, ks, ks_spec, ang, kt, i_of_r)
+								  COORD3 color;
+								  double ka, kd, ks, ks_spec, ang, kt, i_of_r;
+#endif
+{
+	surface_ptr temp_ptr = gLib_surfaces;
+	
+	while (temp_ptr != NULL)
+		if ((ABSOLUTE(temp_ptr->color[R_COLOR] - color[R_COLOR]) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->color[G_COLOR] - color[G_COLOR]) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->color[B_COLOR] - color[B_COLOR]) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->ka - ka) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->kd - kd) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->ks - ks) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->ks_spec - ks_spec) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->ang - ang) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->kt - kt) < EPSILON) &&
+			(ABSOLUTE(temp_ptr->ior - i_of_r) < EPSILON))
+			return (temp_ptr->surf_index);
+		else
+			temp_ptr = temp_ptr->next;
+	return (0);
+}
+
+/*-----------------------------------------------------------------*/
 /*
  * Output color and shading parameters for all following objects
  *
@@ -953,10 +988,12 @@ double ka, kd, ks, ks_spec, ang, kt, i_of_r;
 {
     surface_ptr new_surf;
     char *txname = NULL;
+    int txindex = 0;
     double phong_pow, ang_radians;
 	
     /* Increment the number of surface types we know about */
-    ++gTexture_count;
+    gTexture_count = ++gTexture_max_count; /* [sbt] N.B. reversed below if we
+                                              find in cache. */
     gTexture_ior = i_of_r;
 	
     /* Calculate the Phong coefficient */
@@ -974,22 +1011,30 @@ double ka, kd, ks, ks_spec, ang, kt, i_of_r;
 
     switch (gRT_out_format) {
 	case OUTPUT_DELAYED:
-		new_surf = (surface_ptr)malloc(sizeof(struct surface_struct));
-		if (new_surf == NULL)
-			/* Quietly fail */
-			return NULL;
-		new_surf->surf_name = create_surface_name(name, gTexture_count);
-		new_surf->surf_index = gTexture_count;
-		COPY_COORD3(new_surf->color, color);
-		new_surf->ka = ka;
-		new_surf->kd = kd;
-		new_surf->ks = ks;
-		new_surf->ks_spec = ks_spec;
-		new_surf->ang = ang;
-		new_surf->kt = kt;
-		new_surf->ior = i_of_r;
-		new_surf->next = gLib_surfaces;
-		gLib_surfaces = new_surf;
+		/* if we've already used this exact combination, don't make a 
+		   new record. return the other one. */
+		txindex = lookup_surface_index(color, ka, kd, ks, ks_spec, ang, kt, i_of_r);
+		if (txindex) {
+			gTexture_count = txindex;
+			gTexture_max_count--; /* reverse increment above. Didn't add new tx */
+		} else { /* not found, create */
+			new_surf = (surface_ptr)malloc(sizeof(struct surface_struct));
+			if (new_surf == NULL)
+				/* Quietly fail */
+				return NULL;
+			new_surf->surf_name = create_surface_name(name, gTexture_count);
+			new_surf->surf_index = gTexture_count;
+			COPY_COORD3(new_surf->color, color);
+			new_surf->ka = ka;
+			new_surf->kd = kd;
+			new_surf->ks = ks;
+			new_surf->ks_spec = ks_spec;
+			new_surf->ang = ang;
+			new_surf->kt = kt;
+			new_surf->ior = i_of_r;
+			new_surf->next = gLib_surfaces;
+			gLib_surfaces = new_surf;
+		}
 		break;
 		
 	case OUTPUT_PLG:

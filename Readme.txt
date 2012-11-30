@@ -1,7 +1,8 @@
 STANDARD PROCEDURAL DATABASES, by Eric Haines
 
 [Created while under contract to Hewlett-Packard FSD and HP Laboratories]
-Version 3.14, as of 2/2/2005
+Version 3.15, as of 1 December 2012
+(modified & released by Sam [sbt] Thompson - spd2012@samthompson.com)
     address: Autodesk, 10 Brown Road, Ithaca, NY 14850
     email: erich@acm.org
 
@@ -687,5 +688,16 @@ Version 3.14 released February, 2005 - Changed libpr1.c to output correctly
     output RIB, and I didn't add it because of the nature of this package.
     I'm assuming if anyone wants to render to screen or file, they'll be able
     to add the line in themselves, i.e.: Display "balls.tif" "tiff" "rgba"
+Version 3.15 (unofficial) released December, 2012 - Changes from Sam Thompson;
+    A consolidation of patches and fixes applied separately since mid '90s, as
+    part of support for benchmarking personal RT project "Arise". Added support
+    for compilation under Windows with more recent VisualC and MinGW
+    environments as well as clang under MacOSX. Numerous small bug fixes and
+    tweaks to reduce compiler noise. Larger fixes for issues with torus output
+    for RIB, sombrero (height field) output for PLG (REND386), delayed output
+    code for NURBS and discs (affecting RTrace 8.0.0 and PLG formats), texture
+    instancing for efficiency (affecting RTrace) and database naming/size
+    globals, in preparation for adding support for Arise's description
+    language. Loaded versions 3.4, 3.6, 3.12 - 3.14 to DVCS and released on Web.
 
 -end-

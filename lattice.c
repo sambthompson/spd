@@ -6,6 +6,9 @@
  * Author:  Antonio Costa, INESC-Norte.
  * Version:  3.1 (04/09/93)
  *
+ * Modified: 1 December 2012  - Fix missing main return type declaration
+ *           Sam [sbt] Thompson
+ *
  * SizeFactor determines the number of objects output.
  *	Total spheres   = (SF+1)**3.
  *	Total cylinders = 3*(SF**3)+...
@@ -45,6 +48,7 @@ static FILE * stdout_file = NULL;
 #define radius1 ((double) RADIUS1 / (double) size_factor)
 #define radius2 ((double) RADIUS2 / (double) size_factor)
 
+int
 main(argc, argv)
     int		argc;
     char	*argv[];

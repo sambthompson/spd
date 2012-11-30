@@ -3,6 +3,10 @@
  *
  * Author:  Eric Haines
  *
+ * Modified: 1 December 2012  - Fix to delayed output for NURBs.
+ *           Support for named textures. Fix for output data format type.
+ *           Sam [sbt] Thompson
+ *
  */
 
 /*-----------------------------------------------------------------*/
@@ -100,7 +104,7 @@ dump_obj_file PARAMS((void))
 	temp_obj = temp_obj->next_object) {
 		
 		PLATFORM_MULTITASK();
-		fprintf(gOutfile, "%f ", temp_obj->object_data.polygon.tot_vert);
+		fprintf(gOutfile, "%u ", temp_obj->object_data.polygon.tot_vert);
 		for (i=0;i<(int)temp_obj->object_data.polygon.tot_vert;i++) {
 			fprintf(gOutfile, "%d", vcnt + i + 1);
 			if (i < (int)temp_obj->object_data.polygon.tot_vert - 1)
@@ -127,7 +131,7 @@ dump_all_objects PARAMS((void))
 		
 		PLATFORM_MULTITASK();
 		lookup_surface_stats(temp_obj->surf_index, &gTexture_count,
-			&gTexture_ior);
+			&gTexture_ior, &gTexture_name);
 		if (temp_obj->tx != NULL) {
 		    /* Set the active transform to what it was at the time
 			 * the object was created
@@ -193,8 +197,18 @@ dump_all_objects PARAMS((void))
 				temp_obj->object_data.torus.oradius,
 				temp_obj->curve_format);
 			break;
+		case NURB_OBJ:
+			lib_output_nurb(temp_obj->object_data.nurb.norder,
+				temp_obj->object_data.nurb.npts,
+				temp_obj->object_data.nurb.morder,
+				temp_obj->object_data.nurb.mpts,
+				temp_obj->object_data.nurb.nknotvec,
+				temp_obj->object_data.nurb.mknotvec,
+				temp_obj->object_data.nurb.ctlpts,
+				temp_obj->curve_format);
+			break;
 		default:
-			fprintf(gOutfile, "Bad object type: %d\n",
+			fprintf(gOutfile, "Bad object type: %d in libdmp.c\n",
 				temp_obj->object_type);
 			exit(1);
 		}
