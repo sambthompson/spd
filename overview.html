@@ -1,5 +1,8 @@
 <HTML>
-<HEAD><TITLE>Standard Procedural Databases</TITLE></HEAD>
+<HEAD><TITLE>Standard Procedural Databases</TITLE>
+<META name="description" content="Standard Procedural Databases">
+<META name="keywords" content="SPD, NFF, benchmark, ray tracing, computer graphics, research">
+</HEAD>
 <BODY>
 <H1>
 Standard Procedural Databases
@@ -36,15 +39,19 @@ by <A HREF="mailto:erich@acm.org">Eric Haines</A> et al.
 
 (rendered with <a href="http://www.povray.org/">POV-Ray 3.1</a>)</I>
 </center>
-<P>
-You can
-<A HREF="spd3_13.zip">
-download the latest version of the SPD</A> (currently 3.13).  This software package is not copyrighted and can be used freely (for example,
-<A HREF="http://www.europa.com/~keithr/">WCT2POV</A>, a good 3D file converter
-for Windows, uses SPD's libvec.c graphics library).
-All source is in K&R vanilla C (though ANSI headers can be enabled) and has
-been used on many systems. A MacOS version can be found on
-<A HREF="http://www.geocities.com/SiliconValley/Horizon/4977/macspd.html">Eduard Schwan's SPD page</A>.
+<P> You can <A HREF="spd3_14.zip">download the latest version of the SPD</A> 
+  (currently 3.14), and also <a href="http://www.acm.org/tog/resources/SPD/spd.pdf">view
+  the original IEEE CG&amp;A article</a> from Nov. 1987. This software package is not copyrighted and can be used freely 
+  (for example, <A HREF="http://www.europa.com/~keithr/">WCT2POV</A>, a good 3D 
+  file converter for Windows, uses SPD's libvec.c graphics library). All source 
+  is in K&R vanilla C (though ANSI headers can be enabled) and has been used on 
+  many systems. A MacOS version can be found on <A HREF="http://www.geocities.com/SiliconValley/Horizon/4977/macspd.html">Eduard 
+  Schwan's SPD page</A>.
+<P>For a newer set of more realistic environments for benchmarking ray tracers 
+  (or renderers in general), see <a href="http://www.ce.chalmers.se/BART/">BART: 
+  A Benchmark for Animated Ray Tracing</a>. The focus is software that generates 
+  an animated set of frames for a ray tracer to render. These scenes use an NFF-like 
+  language (AFF), and the authors provide a number of tools for parsing and visualization.
 <P>
 This software is meant to act as a set of basic test images for ray tracing
 algorithms.  The programs generate databases of objects which are fairly
@@ -68,22 +75,20 @@ refraction rays are generated correctly, and "balls" (a.k.a. "sphereflake")
 can check for the correctness of eye and reflection rays.
 <P>
 The images for these databases and other information about them can be
-found in <B>A Proposal for Standard Graphics Environments</B>, <I>IEEE Computer
+found in <a href="http://www.acm.org/tog/resources/SPD/spd.pdf"><B>A Proposal for Standard Graphics Environments</B></a>, <I>IEEE Computer
 Graphics and Applications</I>, vol. 7, no. 11, November 1987, pp. 3-5.  See
 <I>IEEE CG&A</I>, vol. 8, no. 1, January 1988, p. 18 for the correct image of
 the tree database (the only difference is that the sky is blue, not orange).
 The teapot database was added later.
-<P>
-The <A HREF="NFF.TXT">Neutral File Format</a> is the default output format
-from SPD programs.  This format is trivial to parse (if you can use sscanf,
-you can parse it), and each type of object is defined in human terms
-(e.g. a cone is defined by two endpoints and radii).  The basic shapes
-supported are polygon and polygon patch (normal per vertex), cylinder, cone,
-and sphere.
-Note that there are primitives supported within the SPD which are not
-part of NFF, e.g. heightfield, NURBS, and torus, so more elaborate programs
-can be written.  If a format does not support a given primitive, the primitive
-is tessellated and output as polygons.
+<P> The <A HREF="NFF.TXT">Neutral File Format</a> (NFF) is the default output 
+  format from SPD programs. This format is trivial to parse (if you can use sscanf, 
+  you can parse it), and each type of object is defined in human terms (e.g. a 
+  cone is defined by two endpoints and radii). The basic shapes supported are 
+  polygon and polygon patch (normal per vertex), cylinder, cone, and sphere. Note 
+  that there are primitives supported within the SPD which are not part of NFF, 
+  e.g. heightfield, NURBS, and torus, so more elaborate programs can be written. 
+  If a format does not support a given primitive, the primitive is tessellated 
+  and output as polygons. 
 <P>
 Other output formats are
 supported:
@@ -166,208 +171,125 @@ and
 For more information on the SPD, see the README.txt file included in the
 distribution.
 <HR>
+<H2>Compatibility Notes</H2>
+<H3>Linux</H3>
+<p>On some (all?) versions of gcc on Linux, the following correction to the code 
+  is necessary:</p>
+<p> libinf.c, line 33: </p>
+<P>
+FILE *gOutfile      = stdout;<BR>
+change to<BR>
+FILE *gOutfile      = NULL;
+<P>
+<HR>
 <H2>Research Works using SPD</H2>
-Timing comparisons for the various scenes using a wide variety of free software
-ray tracers are summarized in <I>The Ray Tracing News</I>,
-<A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv3n1.html#art10"><B>3</B>(1)</A> (many),
-<A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv6n2.html#art3"><B>6</B>(2)</A>,
-<A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv6n3.html#art5"><B>6</B>(3)</A>,
-<A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv8n3.html#art11"><B>8</B>(3)</A>, and
-<A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv10n3.html#art9"><B>10</B>(3)</A>.
-Here are some research works which have used the SPD to benchmark their ray
-tracers (please let <A HREF="mailto:erich@acm.org">me</A> know of others):
+Timing comparisons for the various scenes using a wide variety of free software 
+ray tracers are summarized in <I>The Ray Tracing News</I>, <A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv3n1.html#art10"><B>3</B>(1)</A> 
+(many), <A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv6n2.html#art3"><B>6</B>(2)</A>, 
+<A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv6n3.html#art5"><B>6</B>(3)</A>, 
+<A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv8n3.html#art11"><B>8</B>(3)</A>, 
+and <A HREF="http://www.acm.org/tog/resources/RTNews/html/rtnv10n3.html#art9"><B>10</B>(3)</A>. 
+Here are some research works which have used the SPD to benchmark their ray tracers 
+(please let <A HREF="mailto:erich@acm.org">me</A> know of others): 
 <UL>
-<LI>Kay, Timothy L. and James T. Kajiya, "Ray Tracing Complex Scenes,"
-<I>Computer Graphics</I> (SIGGRAPH '86 Proceedings), <B>20</B>(4),
-Aug. 1986, p. 269-78.
-
-<LI>
-Arvo, James and David Kirk,
-"Fast Ray Tracing by Ray Classification,"
-<I>Computer Graphics</I> (SIGGRAPH '87 Proceedings)
-<B>21</B>(4),
-July 1987,
-p. 55-64.
-Also in Tutorial: Computer Graphics: Image Synthesis,
-Computer Society Press, Washington, 1988, pp. 196-205.
-Predates SPD, uses recursive tetrahedron.
-
-<LI>
-Subramanian, K.R.,
-"Fast Ray Tracing Using K-D Trees,"
-Master's Thesis,
-Dept. of Computer Sciences, Univ. of Texas at Austin,
-Dec. 1987.
-Uses balls, tetra, tree.
-
-<LI>
-Fussell, Donald and
-K.R. Subramanian
-"Fast Ray Tracing Using K-D Trees,"
-Technical Report TR-88-07,
-Dept. of Computer Sciences, Univ. of Texas at Austin
-March 1988.
-Uses balls, tetra, tree.
-
-<LI>
-Salmon, John and Jeffrey Goldsmith
-"A Hypercube Ray-Tracer,"
-<I>Proceedings of the Third Conference on Hypercube Computers and Applications
-</I>,
-1988.  Uses balls and mountain.
-
-<LI>
-Bouatouch, Kadi and Thierry Priol,
-"Parallel Space Tracing: An Experience on an iPSC Hypercube,"
-ed. N. Magnenat-Thalmann and D. Thalmann,
-<I>New Trends in Computer Graphics</I> (Proceedings of CG International '88),
-Springer-Verlag, New York, 1988, p. 170-87.  Uses balls.
-
-<LI>
-Priol, Thierry and Kadi Bouatouch,
-"Experimenting with a Parallel Ray-Tracing Algorithm on a Hypercube Machine,"
-<I>Eurographics '88</I>,
-Elsevier Science Publishers,
-Amsterdam, North-Holland,
-Sept. 1988,
-p. 243-59.
-Uses balls.
-
-<LI>
-Devillers, Olivier,
-"The Macro-Regions: an Efficient Space Subdivision Structure for Ray Tracing,"
-<I>Eurographics '89</I>,
-Elsevier Science Publishers,
-Amsterdam, North-Holland,
-Sept. 1989,
-p. 27-38, 541.
-(revised version of Technical Report 88-13,
-Laboratoire d'Informatique de l'Ecole Normale Superieure, Paris, France,
-Nov. 1988).  Uses balls, tetra.
-
-<LI>
-Priol, Thierry and
-Kadi Bouatouch,
-"Static Load Balancing for a Parallel Ray Tracing on a MIMD Hypercube,"
-<I>The Visual Computer</I>,
-<B>5</B>(1/2),
-March 1989,
-p. 109-19.
-Uses balls.
-
-<LI>
-Green, Stuart A. and D.J. Paddon,
-"Exploiting Coherence for Multiprocessor Ray Tracing,"
-<I>IEEE Computer Graphics and Applications</I>,
-<B>9</B>(6),
-Nov. 1989,
-p. 12-26.
-Uses balls, mount, rings, tetra.
-
-<LI>
-Green, Stuart A. and D.J. Paddon,
-"A Highly Flexible Multiprocessor Solution for Ray Tracing,"
-<I>The Visual Computer</I>,
-<B>6</B>(2),
-March 1990,
-p. 62-73.
-Uses balls, mount, rings, tetra.
-
-<LI>
-Dauenhauer, David Elliot and
-Sudhanshu Kumar Semwal,
-"Approximate Ray Tracing,"
-<I>Proceedings of Graphics Interface '90</I>,
-Canadian Information Processing Society,
-Toronto, Ontario,
-May 1990,
-p. 75-82.
-Uses balls, gears, tetra.
-
-<LI>
-Badouel, Didier, 
-Kadi Bouatouch,
-Thierry Priol,
-"Ray Tracing on Distributed Memory Parallel Computers: Strategies for
-Distributing Computations and Data,"
-<I>SIGGRAPH '90 Parallel Algorithms and Architecture for 3D Image Generation
-course notes</I>,
-1990.
-Uses mountain, rings, teapot, tetra.
-
-<LI>
-Green, Stuart A.,
-<I>Parallel Processing for Computer Graphics</I>,
-MIT Press/Pitman Publishing,
-Cambridge, Mass./London,
-1991.
-Uses balls, mount, rings, tetra.
-
-<LI>
-Subramanian, K.R. and
-Donald S. Fussell,
-"Automatic Termination Criteria for Ray Tracing Hierarchies,"
-<I>Proceedings of Graphics Interface '91</I>,
-Canadian Information Processing Society,
-Toronto, Ontario,
-June 1991,
-p. 93-100.
-Uses balls, tetra.
-
-<LI>
-Fournier, Alain and
-Pierre Poulin,
-"A Ray Tracing Accelerator Based on a Hierarchy of 1D Sorted Lists,"
-<I>Proceedings of Graphics Interface '93</I>,
-Canadian Information Processing Society,
-Toronto, Ontario,
-May 1993,
-p. 53-61.
-Uses balls, gears, tetra, tree.
-
-<LI>
-Simiakakis, George, and
-A. Day,
-"Five-dimensional Adaptive Subdivision for Ray Tracing,"
-<I>Computer Graphics Forum</I>,
-<B>13</B>(2),
-June 1994,
-p. 133-140.
-Uses balls, gears, mount, teapot, tetra, tree.
-
-<LI>
-Klimaszewski, Krzysztof and
-Thomas W. Sederberg,
-"Faster Ray Tracing Using Adaptive Grids,"
-<I>IEEE Computer Graphics and Applications</I>
-<B>17</B>(1),
-Jan/Feb 1997,
-p. 42-51.
-Uses balls.
-
-<LI>
-Müller, Gordon and Dieter W. Fellner,
-<a href="http://www.cg.cs.tu-bs.de/people/mueller/publications">"Hybrid Scene Structuring with Application to Ray Tracing,"</a>
-<I>Proceedings of International Conference on Visual Computing (ICVC'99),</I>
-Goa, India, Feb 1999, pp. 19-26.
-Uses balls, lattice, tree.
-
-<LI>
-Havran, Vlastimil and
-Filip Sixta 
-<a href="http://www.acm.org/tog/resources/RTNews/html/rtnv12n1.html#art3">"Comparison of Hierarchical Grids,"</a>
-Ray Tracing News, <B>12</B>(1), June 25, 1999.
-Uses all spd.
-<a href="havran_stats_grids.txt">Additional statistics are available at this site</a>
-
-<LI>
-Havran, Vlastimil,
-<a href="http://www.acm.org/tog/resources/RTNews/html/rtnv12n2.html#art4">"A
-Summary of Octree Ray Traversal Algorithms,"</a>
-Ray Tracing News, <B>12</B>(2), December 21, 1999.
-Uses all spd.
-<a href="havran_stats_octrees.txt">Additional statistics are available at this site</a>
-
+  <LI>Kay, Timothy L. and James T. Kajiya, "Ray Tracing Complex Scenes," <I>Computer 
+    Graphics</I> (SIGGRAPH '86 Proceedings), <B>20</B>(4), Aug. 1986, p. 269-78. 
+  <LI> Arvo, James and David Kirk, "Fast Ray Tracing by Ray Classification," <I>Computer 
+    Graphics</I> (SIGGRAPH '87 Proceedings) <B>21</B>(4), July 1987, p. 55-64. 
+    Also in Tutorial: Computer Graphics: Image Synthesis, Computer Society Press, 
+    Washington, 1988, pp. 196-205. Predates SPD, uses recursive tetrahedron. 
+  <LI> Subramanian, K.R., "Fast Ray Tracing Using K-D Trees," Master's Thesis, 
+    Dept. of Computer Sciences, Univ. of Texas at Austin, Dec. 1987. Uses balls, 
+    tetra, tree. 
+  <LI> Fussell, Donald and K.R. Subramanian "Fast Ray Tracing Using K-D Trees," 
+    Technical Report TR-88-07, Dept. of Computer Sciences, Univ. of Texas at Austin 
+    March 1988. Uses balls, tetra, tree. 
+  <LI> Salmon, John and Jeffrey Goldsmith "A Hypercube Ray-Tracer," <I>Proceedings 
+    of the Third Conference on Hypercube Computers and Applications </I>, 1988. 
+    Uses balls and mountain. 
+  <LI> Bouatouch, Kadi and Thierry Priol, "Parallel Space Tracing: An Experience 
+    on an iPSC Hypercube," ed. N. Magnenat-Thalmann and D. Thalmann, <I>New Trends 
+    in Computer Graphics</I> (Proceedings of CG International '88), Springer-Verlag, 
+    New York, 1988, p. 170-87. Uses balls. 
+  <LI> Priol, Thierry and Kadi Bouatouch, "Experimenting with a Parallel Ray-Tracing 
+    Algorithm on a Hypercube Machine," <I>Eurographics '88</I>, Elsevier Science 
+    Publishers, Amsterdam, North-Holland, Sept. 1988, p. 243-59. Uses balls. 
+  <LI> Devillers, Olivier, "The Macro-Regions: an Efficient Space Subdivision 
+    Structure for Ray Tracing," <I>Eurographics '89</I>, Elsevier Science Publishers, 
+    Amsterdam, North-Holland, Sept. 1989, p. 27-38, 541. (revised version of Technical 
+    Report 88-13, Laboratoire d'Informatique de l'Ecole Normale Superieure, Paris, 
+    France, Nov. 1988). Uses balls, tetra. 
+  <LI> Priol, Thierry and Kadi Bouatouch, "Static Load Balancing for a Parallel 
+    Ray Tracing on a MIMD Hypercube," <I>The Visual Computer</I>, <B>5</B>(1/2), 
+    March 1989, p. 109-19. Uses balls. 
+  <LI> Green, Stuart A. and D.J. Paddon, "Exploiting Coherence for Multiprocessor 
+    Ray Tracing," <I>IEEE Computer Graphics and Applications</I>, <B>9</B>(6), 
+    Nov. 1989, p. 12-26. Uses balls, mount, rings, tetra. 
+  <LI> Green, Stuart A. and D.J. Paddon, "A Highly Flexible Multiprocessor Solution 
+    for Ray Tracing," <I>The Visual Computer</I>, <B>6</B>(2), March 1990, p. 
+    62-73. Uses balls, mount, rings, tetra. 
+  <LI> Dauenhauer, David Elliot and Sudhanshu Kumar Semwal, "Approximate Ray Tracing," 
+    <I>Proceedings of Graphics Interface '90</I>, Canadian Information Processing 
+    Society, Toronto, Ontario, May 1990, p. 75-82. Uses balls, gears, tetra. 
+  <LI> Badouel, Didier, Kadi Bouatouch, Thierry Priol, "Ray Tracing on Distributed 
+    Memory Parallel Computers: Strategies for Distributing Computations and Data," 
+    <I>SIGGRAPH '90 Parallel Algorithms and Architecture for 3D Image Generation 
+    course notes</I>, 1990. Uses mountain, rings, teapot, tetra.
+  <LI> Spackman, John, "Scene Decompositions for Accelerated Ray Tracing".
+    Ph.D. Thesis, The University of Bath, UK, 1990.
+    Available as Bath Computer Science Technical Report 90/33. Ray tracer code
+    can be found at <a href="http://www.johnspackman.ukf.net/raytrace/index.htm">his
+    site</a>.
+  <LI> Green, Stuart A., <I>Parallel Processing for Computer Graphics</I>, MIT 
+    Press/Pitman Publishing, Cambridge, Mass./London, 1991. Uses balls, mount, 
+    rings, tetra. 
+  <LI> Subramanian, K.R. and Donald S. Fussell, "Automatic Termination Criteria 
+    for Ray Tracing Hierarchies," <I>Proceedings of Graphics Interface '91</I>, 
+    Canadian Information Processing Society, Toronto, Ontario, June 1991, p. 93-100. 
+    Uses balls, tetra.
+  <LI> Spackman, John N., "The SMART Navigation of a Ray Through an Oct-tree,"
+    <I>Computers and Graphics</I>, vol. 15, no. 2, June 1991, p. 185-194. <a href="http://www.johnspackman.ukf.net">Code for
+    the ray tracer</a> is available.
+  <LI> Fournier, Alain and Pierre Poulin, "A Ray Tracing Accelerator Based on 
+    a Hierarchy of 1D Sorted Lists," <I>Proceedings of Graphics Interface '93</I>, 
+    Canadian Information Processing Society, Toronto, Ontario, May 1993, p. 53-61. 
+    Uses balls, gears, tetra, tree. 
+  <LI> Simiakakis, George, and A. Day, "Five-dimensional Adaptive Subdivision 
+    for Ray Tracing," <I>Computer Graphics Forum</I>, <B>13</B>(2), June 1994, 
+    p. 133-140. Uses balls, gears, mount, teapot, tetra, tree. 
+  <LI> Klimaszewski, Krzysztof and Thomas W. Sederberg, "Faster Ray Tracing Using 
+    Adaptive Grids," <I>IEEE Computer Graphics and Applications</I> <B>17</B>(1), 
+    Jan/Feb 1997, p. 42-51. Uses balls. 
+  <LI>Havran, Vlastimil, Tomas Kopal, Jiri Bittner, and Jiri Zara, <a href="http://www.acm.org/jgt/papers/HavranKopalBittnerZara97/">"Fast 
+    robust BSP tree traversal algorithm for ray tracing,"</a> <i>Journal of Graphics 
+    Tools</i>, <b>2</b>(4):15-24, 1997. Uses balls, gears, mount, and tetra. 
+  <LI> Nakamaru, Koji and Yoshio Ohno, "Breadth-First Ray Tracing Utilizing Uniform 
+    Spatial Subdivision," <I>IEEE Transactions on Visualization and Computer Graphics</I>, 
+    <B>3</B>(4), Oct-Dec 1997, p. 316-328. 
+  <LI> M&uuml;ller, Gordon and Dieter W. Fellner, <a href="http://www.cg.cs.tu-bs.de/people/mueller/publications">"Hybrid 
+    Scene Structuring with Application to Ray Tracing,"</a> <I>Proceedings of 
+    International Conference on Visual Computing (ICVC'99),</I> Goa, India, Feb 
+    1999, pp. 19-26. Uses balls, lattice, tree. 
+  <LI> Havran, Vlastimil and Filip Sixta <a href="http://www.acm.org/tog/resources/RTNews/html/rtnv12n1.html#art3">"Comparison 
+    of Hierarchical Grids,"</a> Ray Tracing News, <B>12</B>(1), June 25, 1999. 
+    Uses all spd. <a href="havran_stats_grids.txt">Additional statistics are available 
+    at this site</a> 
+  <LI> Havran, Vlastimil, <a href="http://www.acm.org/tog/resources/RTNews/html/rtnv12n2.html#art4">"A 
+    Summary of Octree Ray Traversal Algorithms,"</a> Ray Tracing News, <B>12</B>(2), 
+    December 21, 1999. Uses all spd. <a href="havran_stats_octrees.txt">Additional 
+    statistics are available at this site</a> 
+  <LI>Havran, Vlastimil, <a href="http://www.mpi-sb.mpg.de/%7Ehavran/DISSVH/phdthesis.html">"Heuristic 
+    Ray Shooting Algorithms"</a>, <i>Ph.D. Thesis</i>, Czech Technical University, 
+    November 2000. Uses all spd. 
+  <LI>Koji Nakamaru and Yoshio Ohno. <a href="http://www.acm.org/jgt/papers/NakamaruOhno01/">"Enhanced 
+    breadth-first ray tracing,"</a> <i>Journal of Graphics Tools</i>, <b>6</b>(4):13-28, 
+    2001. Uses all spd. Renderings include up to a billion primitives.<br>
+  <LI>Havran, Vlastimil and Jiri Bittner: <a href="http://www.mpi-sb.mpg.de/~havran/ARTICLES/wscg2002.pdf">"On
+    Improving KD-Trees for Ray Shooting"</a>, Proceedings of WSCG'2002
+    conference, pp. 209-217, February 2002. Also see Havran's page about
+    <a href="http://sgi.felk.cvut.cz/~havran/vis/visualization.html">Libor Dachs'</a>
+    ray tracing visualization system. 
+  
 </UL>
 <HR>
 <H2>Graphics Benchmarks</H2>
@@ -389,6 +311,6 @@ TOG Software</A>
 <A HREF="http://www.acm.org/tog/editors/erich/">Eric Haines</A>,
 On-Line Editor / <A HREF="mailto:erich@acm.org">erich@acm.org</A>
 </ADDRESS>
-<P>Last change: <I>January 15, 2000</I>
+<P>Last change: <I>February 2, 2005</I> 
 </BODY>
 </HTML>

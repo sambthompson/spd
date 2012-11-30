@@ -1,8 +1,8 @@
 STANDARD PROCEDURAL DATABASES, by Eric Haines
 
 [Created while under contract to Hewlett-Packard FSD and HP Laboratories]
-Version 3.13, as of 11/14/99
-    address: Autodesk, 1050 Craft Road, Ithaca, NY 14850
+Version 3.14, as of 2/2/2005
+    address: Autodesk, 10 Brown Road, Ithaca, NY 14850
     email: erich@acm.org
 
 {This software package is not copyrighted and can be used freely.}
@@ -677,7 +677,15 @@ Version 3.13 released November, 1999 - Changed lib_output_color interface:
     the surface), and cleaned up code comments. Fixed readnff.c (better
     ks_spec value output) and libpr1.c (ang not set below 1.0 if 0.0 is
     detected). Better VRML specular highlight output. Gears background color
-	made blue, to enhance visibility of transparent gears. Better command
-	line argument checking. Heightfield export improvement (I hope!).
+    made blue, to enhance visibility of transparent gears. Better command
+    line argument checking. Heightfield export improvement (I hope!).
+Version 3.14 released February, 2005 - Changed libpr1.c to output correctly
+    for newer versions of prman to render the SPD models. All changes from
+    Alfred Young at Tippett Studio. He writes: 1. The shadows are now
+    raytraced with the "shadowspot" light shader so as to make it a single
+    render pass. 2. There isn't a particular display driver noted with the
+    output RIB, and I didn't add it because of the nature of this package.
+    I'm assuming if anyone wants to render to screen or file, they'll be able
+    to add the line in themselves, i.e.: Display "balls.tif" "tiff" "rgba"
 
 -end-

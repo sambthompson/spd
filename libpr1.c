@@ -402,15 +402,19 @@ int    resx, resy;
 		break;
 		
 	case OUTPUT_RIB:
-		fprintf(gOutfile, "version 3.03\n");
+		//fprintf(gOutfile, "version 3.03\n");
 		fprintf(gOutfile, "FrameBegin 1\n");
 		fprintf(gOutfile, "Format %d %d 1\n", resx, resy);
 		fprintf(gOutfile, "PixelSamples 1 1\n");
 		fprintf(gOutfile, "ShadingRate 1.0\n");
-		fprintf(gOutfile, "Declare \"reflected\" \"float\"\n");
-		fprintf(gOutfile, "Declare \"transmitted\" \"float\"\n"); 
-		fprintf(gOutfile, "Declare \"index\" \"float\"\n");
-		fprintf(gOutfile, "Option \"render\" \"max_raylevel\" [4]\n");
+		//fprintf(gOutfile, "Declare \"reflected\" \"float\"\n");
+		//fprintf(gOutfile, "Declare \"transmitted\" \"float\"\n"); 
+		//fprintf(gOutfile, "Declare \"index\" \"float\"\n");
+		//fprintf(gOutfile, "Option \"render\" \"max_raylevel\" [4]\n");
+		fprintf(gOutfile, "Attribute \"visibility\" \"int trace\" [1]\n");
+                fprintf(gOutfile, "Attribute \"visibility\" \"string transmission\" [\"opaque\"]\n");
+                fprintf(gOutfile, "Attribute \"trace\" \"int maxspeculardepth\" [4]\n");
+
 		fprintf(gOutfile, "Projection \"perspective\" \"fov\" %#g\n",
 			fov_angle);
 		fprintf(gOutfile, "Clipping %#g %#g\n\n", hither, 1e38);
@@ -689,10 +693,13 @@ int    resx, resy;
 		 {
 			 static int number= 0;
 			 
-			 fprintf(gOutfile, "Attribute \"light\" \"shadows\" \"on\"\n");
-			 fprintf(gOutfile, "LightSource \"pointlight\" %d \"from\" [ %#g %#g %#g ] \"intensity\" [20]\n",
-				 number++,
-				 vec[X], vec[Y], vec[Z]);
+			 //fprintf(gOutfile, "Attribute \"light\" \"shadows\" \"on\"\n");
+			 fprintf(gOutfile, "LightSource \"shadowspot\" %d \"from\" [ %#g %#g %#g ] \"intensity\" [20] \"shadowname\" [\"raytrace\"]\n",
+				number++,
+                                vec[X], vec[Y], vec[Z]);
+			 //fprintf(gOutfile, "LightSource \"pointlight\" %d \"from\" [ %#g %#g %#g ] \"intensity\" [20]\n",
+			//	 number++,
+			//	 vec[X], vec[Y], vec[Z]);
 		 }
 		 break;
 		 
