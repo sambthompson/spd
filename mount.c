@@ -1,34 +1,34 @@
 /*
  * mount.c - creates a fractal mountain, using Carpenter's method with a
- *	different extension to square grids.  A pyramid of 4 glass spheres
- *	is added in front of the mountain.  One light source.
+ *      different extension to square grids.  A pyramid of 4 glass spheres
+ *      is added in front of the mountain.  One light source.
  *
- *	NOTE: the hashing function used to generate the database originally is
- *	faulty.  The function causes repetition to occur within the fractal
- *	mountain (obviously not very fractal behavior!).  A new hashing
- *	function is included immediately after the old one:  merely define
- *	NEW_HASH if you want to use a better hashing function.  To perform ray
- *	tracing comparison tests you should still use the old, faulty database
- *	(it may have repetition, but it's still a good test image).
+ *      NOTE: the hashing function used to generate the database originally is
+ *      faulty.  The function causes repetition to occur within the fractal
+ *      mountain (obviously not very fractal behavior!).  A new hashing
+ *      function is included immediately after the old one:  merely define
+ *      NEW_HASH if you want to use a better hashing function.  To perform ray
+ *      tracing comparison tests you should still use the old, faulty database
+ *      (it may have repetition, but it's still a good test image).
  *
  * Author:  Eric Haines, 3D/Eye, Inc.
  *
  * size_factor determines the number of objects output.
- *	Total triangular polygons = 2 * (4**size_factor)
+ *      Total triangular polygons = 2 * (4**size_factor)
  *
- *	size_factor	# triangles	# spheres
- *	     1		     8		     4
- *	     2		    32		     4
- *	     3		   128		     4
+ *      size_factor     # triangles     # spheres
+ *           1               8               4
+ *           2              32               4
+ *           3             128               4
  *
- *	     6		  8192		     4
+ *           6            8192               4
  */
 
 #include <stdio.h>
 #include <math.h>
-#include <stdlib.h>	/* atoi */
+#include <stdlib.h>     /* atoi */
 #include "def.h"
-#include "drv.h"	/* display_close() */
+#include "drv.h"        /* display_close() */
 #include "lib.h"
 
 /* Determine which raytracer we will use */
@@ -50,43 +50,43 @@ static FILE * stdout_file = NULL;
 /* #define NEW_HASH */
 
 /* fractal dimension - affects variance of z.  Between 2 and 3 */
-#define	FRACTAL_DIMENSION	2.2
+#define FRACTAL_DIMENSION       2.2
 /* change MOUNTAIN_NO to get a different mountain */
-#define	MOUNTAIN_NO		21
+#define MOUNTAIN_NO             21
 
 /* lower left corner and width of mountain definitions */
-#define	X_CORNER	-1.0
-#define	Y_CORNER	-1.0
-#define	WIDTH		 2.0
+#define X_CORNER        -1.0
+#define Y_CORNER        -1.0
+#define WIDTH            2.0
 
 #ifndef NEW_HASH
 
 /* Hashing function to get a seed for the random number generator. */
 /* This is the old, buggy hashing function - use it if you wish to
  * obtain the same image as in the November 1987 IEEE CG&A article. */
-#define	hash_rand(A,B,C)	( ( (((unsigned long)(A))<<(23-(C))) +	\
-				    (((unsigned long)(B))<<(15-(C)))	\
+#define hash_rand(A,B,C)        ( ( (((unsigned long)(A))<<(23-(C))) +  \
+				    (((unsigned long)(B))<<(15-(C)))    \
 				  + (((unsigned long)(A))<<(7-(C))) ) & 0xffff)
 #else
 
 /* New, corrected hashing function.  Use for a true fractal mountain */
 /* 134456 is M1 in routine lib_gauss_rand() */
-#define	hash_rand(A,B,C)	( ( C <= 15 ) ?				\
-				  ( ABSOLUTE(				\
-				    (((unsigned long)(A))<<(31-(C))) +	\
-				    (((unsigned long)(B))<<(15-(C))) )	\
-				  % 134456 ) :				\
-				  ( ABSOLUTE(				\
-				    (((unsigned long)(A))<<(31-(C))) +	\
-				    (((unsigned long)(B))>>((C)-15)) )	\
+#define hash_rand(A,B,C)        ( ( C <= 15 ) ?                         \
+				  ( ABSOLUTE(                           \
+				    (((unsigned long)(A))<<(31-(C))) +  \
+				    (((unsigned long)(B))<<(15-(C))) )  \
+				  % 134456 ) :                          \
+				  ( ABSOLUTE(                           \
+				    (((unsigned long)(A))<<(31-(C))) +  \
+				    (((unsigned long)(B))>>((C)-15)) )  \
 				  % 134456 ) )
 				  )
 #endif
 
-static	double  Roughness ;
+static  double  Roughness ;
 
 /* create a pyramid of crystal spheres */
-void
+static void
 create_spheres(center)
     COORD4 center;
 {
@@ -122,7 +122,7 @@ create_spheres(center)
  * Build mountain section.  If at width > 1, split quadrilateral into four
  * parts.  Else if at width == 1, output quadrilateral as two triangles.
  */
-void
+static void
 grow_mountain(fnum_pts, width, ll_x, ll_y, ll_fz, lr_fz, ur_fz, ul_fz)
     double fnum_pts;
     int width;
@@ -178,15 +178,15 @@ grow_mountain(fnum_pts, width, ll_x, ll_y, ll_fz, lr_fz, ur_fz, ul_fz)
 	iz = MOUNTAIN_NO + hash_rand(ll_x + half_width, ll_y, size_factor);
 	lower_fz = (ll_fz + lr_fz) / 2.0 + rise_height * lib_gauss_rand(iz);
 	iz = MOUNTAIN_NO + hash_rand(ll_x + width, ll_y + half_width,
-					  size_factor);
+				          size_factor);
 	right_fz = ( lr_fz + ur_fz ) / 2.0 + rise_height * lib_gauss_rand(iz);
 	iz = MOUNTAIN_NO + hash_rand(ll_x + half_width, ll_y + width,
-					  size_factor);
+				          size_factor);
 	upper_fz = ( ur_fz + ul_fz ) / 2.0 + rise_height * lib_gauss_rand(iz);
 	iz = MOUNTAIN_NO + hash_rand( ll_x, ll_y + half_width, size_factor);
 	left_fz = ( ul_fz + ll_fz ) / 2.0 + rise_height * lib_gauss_rand(iz);
 	iz = MOUNTAIN_NO + hash_rand(ll_x + half_width, ll_y + half_width,
-					  size_factor);
+				          size_factor);
 	middle_fz = ( ll_fz + lr_fz + ur_fz + ul_fz ) / 4.0 +
 			  1.4142136 * rise_height * lib_gauss_rand(iz);
 

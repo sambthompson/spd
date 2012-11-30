@@ -1,8 +1,11 @@
-SPD Update 3.3f4 - August 7, 1994
-=============================
+SPD Update 3.6 - April 3, 1995
+==============================
 
 Macintosh SPD
-Document by Eduard Schwan
+Document by Eduard Schwan (71513.2161@compuserve.com)
+
+[The Macintosh version is no longer distributed with the regular SPD, but is
+in its own SIT file.  I leave these notes here FYI. - EAH]
 
 Introduction
 ------------
@@ -16,7 +19,8 @@ guarantees, no restrictions on their use or distribution.
 
 The Macintosh port of SPD is contained in the archive MACSPD.SIT contains
 the SPD Mac Source code, for Think C or MPW C, and the SPD Mac Applications
-ready to run.
+ready to run.  So, hunt down this SIT as the normal SPD distribution does not
+include the Mac specific *.bin files.
 
 There are also IBM PC versions of these archives available.
 
@@ -78,9 +82,10 @@ To run any one of the SPD applications:
 
 NOTE:  POV-Ray Macintosh cannot open main scene files larger than 32k bytes,
 and many SPD files will be much bigger than this.  To get around this, create
-a small POV-Ray file whose sole purpose in life is to include the large .OUT file
-(e.g.  "rings.pov".)  If you want to edit the .OUT file, you will need to use
-a "real" text editor or word processor that doesn't have the 32k limitation.
+a small POV-Ray file whose sole purpose in life is to include the large .OUT
+file (e.g.  "rings.pov".)  If you want to edit the .OUT file, you will need to
+use a "real" text editor or word processor that doesn't have the 32k
+limitation.
 
 
 Bugs
@@ -142,7 +147,8 @@ example, to create the "Gears" application, do the following:
 2. Open Gears.¹, Remove the "balls.c" file, and Add the "gears.c" file
 3. Build the Application, and when prompted for an app. file, type Gears
 4. Do steps 1 through 3 for each application (balls, gears, lattice, mount,
-   readdxf, readnff, rings, sample, shells, teapot, tetra, tree)
+   readdxf, readnff, readobj, rings, sample, shells, sombrero, teapot, tetra,
+   tree)
 Note that I have created an "ANSI-NoConsole" library for these to link to.
 You will need to do the same.  Instructions on how to do this are in the
 Symantec manual, sorry for the cop-out on instructions.

@@ -17,14 +17,14 @@
  *     Changed several vars from COORD4 to COORD3
  *
  * Size factor determines the number of objects output.
- *	Total objects = 180*(2**SF) spheres
+ *      Total objects = 180*(2**SF) spheres
  *
- *	Size factor	# spheres    # squares
- *	     1		    360           1
- *	     2		    720           1
- *	     3		   1440		  1
- *	     4		   2880		  1
- *	     5 		   5760		  1
+ *      Size factor     # spheres    # squares
+ *           1              360           1
+ *           2              720           1
+ *           3             1440           1
+ *           4             2880           1
+ *           5             5760           1
  */
 
 #include <stdio.h>
@@ -45,13 +45,14 @@ static FILE * stdout_file = NULL;
 #endif /* OUTPUT_TO_FILE */
 
 
-static	double	fgamma = 1.0 ;	/* 0.01 to 3 */
-static	double	alpha = 0.0 ;	/* > 1 - 1.1 is good */
-static	double	beta = -2.0 ;	/* ~ -2 */
-static	double	a = 0.15 ;	/* exponent constant */
-static	double	k = 1.0 ;	/* relative size */
+static  double  fgamma = 1.0 ;  /* 0.01 to 3 */
+static  double  alpha = 0.0 ;   /* > 1 - 1.1 is good */
+static  double  beta = -2.0 ;   /* ~ -2 */
+static  double  a = 0.15 ;      /* exponent constant */
+static  double  k = 1.0 ;       /* relative size */
 
-void	shells_show_usage()
+static void
+shells_show_usage()
 {
     show_gen_usage() ;
     fprintf(stderr, "-a alpha - alpha value (0 to 1.1 is good)\n");
@@ -60,10 +61,11 @@ void	shells_show_usage()
     fprintf(stderr, "-e exponent - exponent value (0.15 is good)\n");
 }
 
-int	shells_get_opts( argc, argv, p_size, p_rdr, p_curve )
-int	argc ;
-char	*argv[] ;
-int	*p_size, *p_rdr, *p_curve ;
+static int
+shells_get_opts( argc, argv, p_size, p_rdr, p_curve )
+int     argc ;
+char    *argv[] ;
+int     *p_size, *p_rdr, *p_curve ;
 {
 int num_arg ;
 int val ;
@@ -74,7 +76,7 @@ double fval ;
     while ( ++num_arg < argc ) {
 	if ( (*argv[num_arg] == '-') || (*argv[num_arg] == '/') ) {
 	    switch( argv[num_arg][1] ) {
-		case 'g':	/* gamma */
+		case 'g':       /* gamma */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%lf", &fval ) ;
 			if ( fval < 0.0 ) {
@@ -90,7 +92,7 @@ double fval ;
 			return( TRUE ) ;
 		    }
 		    break ;
-		case 'a':	/* alpha */
+		case 'a':       /* alpha */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%lf", &alpha ) ;
 		    } else {
@@ -99,7 +101,7 @@ double fval ;
 			return( TRUE ) ;
 		    }
 		    break ;
-		case 'b':	/* beta */
+		case 'b':       /* beta */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%lf", &beta ) ;
 		    } else {
@@ -108,7 +110,7 @@ double fval ;
 			return( TRUE ) ;
 		    }
 		    break ;
-		case 'e':	/* exponent selection */
+		case 'e':       /* exponent selection */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%lf", &a ) ;
 		    } else {
@@ -118,7 +120,7 @@ double fval ;
 		    }
 		    break ;
 
-		case 's':	/* size selection */
+		case 's':       /* size selection */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%d", &val ) ;
 			if ( val < 1 ) {
@@ -134,13 +136,13 @@ double fval ;
 			return( TRUE ) ;
 		    }
 		    break ;
-		case 'c':	/* true curve output */
+		case 'c':       /* true curve output */
 		    *p_curve = OUTPUT_CURVES ;
 		    break ;
-		case 't':	/* tessellated curve output */
+		case 't':       /* tessellated curve output */
 		    *p_curve = OUTPUT_PATCHES ;
 		    break ;
-		case 'r':	/* renderer selection */
+		case 'r':       /* renderer selection */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%d", &val ) ;
 			if ( val < OUTPUT_VIDEO || val >= OUTPUT_DELAYED ) {
@@ -173,15 +175,15 @@ double fval ;
 }
 
 main(argc,argv)
-int	argc ;
-char	*argv[] ;
+int     argc ;
+char    *argv[] ;
 {
-double	r,angle ;
-long	i, steps ;
-COORD3	back_color, obj_color ;
-COORD3	from, at, up ;
-COORD4	light ;
-COORD4	sphere;
+double  r,angle ;
+long    i, steps ;
+COORD3  back_color, obj_color ;
+COORD3  from, at, up ;
+COORD4  light ;
+COORD4  sphere;
 
     PLATFORM_INIT(SPD_SHELLS);
 
@@ -193,6 +195,8 @@ COORD4	sphere;
     if ( lib_open( raytracer_format, "Shells.out" ) ) {
 	return EXIT_FAIL;
     }
+
+    lib_set_polygonalization(2, 2);
 
     /* output background color - UNC sky blue */
     /* NOTE: Do this BEFORE lib_output_viewpoint(), for display_init() */

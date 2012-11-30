@@ -1,4 +1,4 @@
-SPD 3.3 Enhanced contains the following files:
+SPD 3.6 Enhanced contains the following files:
 
     MANIFEST - what you are now reading
     README.1st - readme file for the SPD enhancements
@@ -9,8 +9,6 @@ SPD 3.3 Enhanced contains the following files:
     makefile.hp  - Hewlett Packard HPUX makefile (includes X11 displayer)
     makefile.ib2 - IBM PC Zortech makefile
     makefile.ibm - IBM PC "generic" makefile
-    makempw.bin  - Macintosh MPW makefile (MacBinary format)
-    makems.bin  - Macintosh Symantec 7 proj/makefile (MacBinary format)
     makefile.unx - Unix makefile
     makefile.dj  - IBM PC DJGPP+GRX makefile
 
@@ -23,6 +21,7 @@ SPD 3.3 Enhanced contains the following files:
     libpr1.c - library of general shape primitive routines, basic support
     libpr2.c - library of general shape primitive routines, simple
     libpr3.c - library of general shape primitive routines, more complex
+    libtx.c - library of texturing support routines
     libvec.c - library of vector & matrix routines
     libvec.h - vector & matrix library defines and routine declarations
 
@@ -40,21 +39,20 @@ SPD 3.3 Enhanced contains the following files:
     drv_hp.c - HP Starbase/X11 display driver
     drv_ibm.c - IBM PC VGA display driver
     drv_mac.c - Macintosh display driver
-    MacSPDt.bin - Macintosh resource text file (for MPW, MacBinary format)
-    MacSPDr.bin - Macintosh resource data file (MacBinary format)
     drv_unix.c - generic Unix driver template (usable, but does not display)
     drv_zrtc.c - Zortech graphics display driver
 
     readdxf.c - DXF file reader/displayer/converter
-    view.dat - view for DXF displayer
+    readnff.c - NFF file reader/displayer/converter
+    readobj.c - Wavefront OBJ file reader/displayer/converter
+    view.dat - view for DXF and OBJ displayer
     f117.dxf - sample DXF file; F117 plane
     skull.dxf - sample DXF file; skull
-    obj2nff.awk - a Wavefront OBJ to NFF conversion awk script
-
-    readnff.c - NFF file reader/displayer/converter
 
     sample.c - an example file showing a simple scene
     lattice.c - cubic lattice generator
     shells.c - "shell" generator (but don't try to look inside!)
+    sombrero.c - hat function heightfield output example
+    jacks.c - recursive jacks, by Alexander Enzmann
 
 [eof]

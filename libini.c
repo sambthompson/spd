@@ -29,8 +29,8 @@
 /*-----------------------------------------------------------------*/
 int
 lib_open( raytracer_format, filename )
-int	raytracer_format ;
-char	*filename ;	/* unused except for Mac version */
+int     raytracer_format ;
+char    *filename ;     /* unused except for Mac version */
 {
 #ifdef OUTPUT_TO_FILE
     /* no stdout, so write to a file! */
@@ -48,8 +48,15 @@ char	*filename ;	/* unused except for Mac version */
     if ((raytracer_format == OUTPUT_RTRACE) ||
 	(raytracer_format == OUTPUT_PLG))
 	lib_set_raytracer(OUTPUT_DELAYED);
+    else if (raytracer_format == OUTPUT_RWX) {
+       fprintf(gOutfile, "ModelBegin\n");
+       fprintf(gOutfile, "ClumpBegin\n");
+       fprintf(gOutfile, "LightSampling Vertex\n");
+       lib_set_raytracer(raytracer_format);
+       }
     else
 	lib_set_raytracer(raytracer_format);
+
 
     return 0 ;
 }
@@ -74,6 +81,10 @@ lib_close PARAMS((void))
 	fprintf(gOutfile, "ENDSEC\n");
 	fprintf(gOutfile, "  0\n");
 	fprintf(gOutfile, "EOF\n");
+    }
+    else if (gRT_out_format == OUTPUT_RWX) {
+	fprintf(gOutfile, "ClumpEnd\n");
+	fprintf(gOutfile, "ModelEnd\n");
     }
 
 #ifdef OUTPUT_TO_FILE
@@ -126,20 +137,22 @@ void show_gen_usage PARAMS((void))
     fprintf(stderr, "usage [-s size] [-r format] [-c|t]\n");
     fprintf(stderr, "-s size - input size of database\n");
     fprintf(stderr, "-r format - input database format to output:\n");
-    fprintf(stderr, "	0   Output direct to the screen (sys dependent)\n");
-    fprintf(stderr, "	1   NFF - MTV\n");
-    fprintf(stderr, "	2   POV-Ray 1.0\n");
-    fprintf(stderr, "	3   Polyray v1.4, v1.5\n");
-    fprintf(stderr, "	4   Vivid 2.0\n");
-    fprintf(stderr, "	5   QRT 1.5\n");
-    fprintf(stderr, "	6   Rayshade\n");
-    fprintf(stderr, "	7   POV-Ray 2.0 (format is subject to change)\n");
-    fprintf(stderr, "	8   RTrace 8.0.0\n");
-    fprintf(stderr, "	9   PLG format for use with rend386\n");
-    fprintf(stderr, "	10  Raw triangle output\n");
-    fprintf(stderr, "	11  art 2.3\n");
-    fprintf(stderr, "	12  RenderMan RIB format\n");
-    fprintf(stderr, "	13  Autodesk DXF format (polygons only)\n");
+    fprintf(stderr, "   0   Output direct to the screen (sys dependent)\n");
+    fprintf(stderr, "   1   NFF - MTV\n");
+    fprintf(stderr, "   2   POV-Ray 1.0\n");
+    fprintf(stderr, "   3   Polyray v1.4, v1.5\n");
+    fprintf(stderr, "   4   Vivid 2.0\n");
+    fprintf(stderr, "   5   QRT 1.5\n");
+    fprintf(stderr, "   6   Rayshade\n");
+    fprintf(stderr, "   7   POV-Ray 2.0 (format is subject to change)\n");
+    fprintf(stderr, "   8   RTrace 8.0.0\n");
+    fprintf(stderr, "   9   PLG format for use with rend386\n");
+    fprintf(stderr, "   10  Raw triangle output\n");
+    fprintf(stderr, "   11  art 2.3\n");
+    fprintf(stderr, "   12  RenderMan RIB format\n");
+    fprintf(stderr, "   13  Autodesk DXF format (polygons only)\n");
+    fprintf(stderr, "   14  Wavefront OBJ format (polygons only)\n");
+    fprintf(stderr, "   15  RenderWare RWX script file\n");
     fprintf(stderr, "-c - output true curved descriptions\n");
     fprintf(stderr, "-t - output tessellated triangle descriptions\n");
 
@@ -157,20 +170,22 @@ void show_read_usage PARAMS((void))
     fprintf(stderr, "usage [-f filename] [-r format] [-c|t]\n");
     fprintf(stderr, "-f filename - file to import/convert/display\n");
     fprintf(stderr, "-r format - format to output:\n");
-    fprintf(stderr, "	0   Output direct to the screen (sys dependent)\n");
-    fprintf(stderr, "	1   NFF - MTV\n");
-    fprintf(stderr, "	2   POV-Ray 1.0\n");
-    fprintf(stderr, "	3   Polyray v1.4, v1.5\n");
-    fprintf(stderr, "	4   Vivid 2.0\n");
-    fprintf(stderr, "	5   QRT 1.5\n");
-    fprintf(stderr, "	6   Rayshade\n");
-    fprintf(stderr, "	7   POV-Ray 2.0 (format is subject to change)\n");
-    fprintf(stderr, "	8   RTrace 8.0.0\n");
-    fprintf(stderr, "	9   PLG format for use with rend386\n");
-    fprintf(stderr, "	10  Raw triangle output\n");
-    fprintf(stderr, "	11  art 2.3\n");
-    fprintf(stderr, "	12  RenderMan RIB format\n");
-    fprintf(stderr, "	13  Autodesk DXF format (polygons only)\n");
+    fprintf(stderr, "   0   Output direct to the screen (sys dependent)\n");
+    fprintf(stderr, "   1   NFF - MTV\n");
+    fprintf(stderr, "   2   POV-Ray 1.0\n");
+    fprintf(stderr, "   3   Polyray v1.4, v1.5\n");
+    fprintf(stderr, "   4   Vivid 2.0\n");
+    fprintf(stderr, "   5   QRT 1.5\n");
+    fprintf(stderr, "   6   Rayshade\n");
+    fprintf(stderr, "   7   POV-Ray 2.0 (format is subject to change)\n");
+    fprintf(stderr, "   8   RTrace 8.0.0\n");
+    fprintf(stderr, "   9   PLG format for use with rend386\n");
+    fprintf(stderr, "   10  Raw triangle output\n");
+    fprintf(stderr, "   11  art 2.3\n");
+    fprintf(stderr, "   12  RenderMan RIB format\n");
+    fprintf(stderr, "   13  Autodesk DXF format (polygons only)\n");
+    fprintf(stderr, "   14  Wavefront OBJ format (polygons only)\n");
+    fprintf(stderr, "   15  RenderWare RWX script file\n");
     fprintf(stderr, "-c - output true curved descriptions\n");
     fprintf(stderr, "-t - output tessellated triangle descriptions\n");
 
@@ -198,6 +213,8 @@ void show_read_usage PARAMS((void))
  *   11  art 2.3
  *   12  RenderMan RIB format
  *   13  Autodesk DXF format
+ *   14  Wavefront OBJ format
+ *   15  RenderWare RWX format
  * -c - output true curved descriptions
  * -t - output tessellated triangle descriptions
  *
@@ -205,10 +222,10 @@ void show_read_usage PARAMS((void))
  * some of these are useless for the various routines - we're being a bit
  * lazy here...
  */
-int	lib_gen_get_opts( argc, argv, p_size, p_rdr, p_curve )
-int	argc ;
-char	*argv[] ;
-int	*p_size, *p_rdr, *p_curve ;
+int     lib_gen_get_opts( argc, argv, p_size, p_rdr, p_curve )
+int     argc ;
+char    *argv[] ;
+int     *p_size, *p_rdr, *p_curve ;
 {
 int num_arg ;
 int val ;
@@ -218,13 +235,13 @@ int val ;
     while ( ++num_arg < argc ) {
 	if ( (*argv[num_arg] == '-') || (*argv[num_arg] == '/') ) {
 	    switch( argv[num_arg][1] ) {
-		case 'c':	/* true curve output */
+		case 'c':       /* true curve output */
 		    *p_curve = OUTPUT_CURVES ;
 		    break ;
-		case 't':	/* tessellated curve output */
+		case 't':       /* tessellated curve output */
 		    *p_curve = OUTPUT_PATCHES ;
 		    break ;
-		case 'r':	/* renderer selection */
+		case 'r':       /* renderer selection */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%d", &val ) ;
 			if ( val < OUTPUT_VIDEO || val >= OUTPUT_DELAYED ) {
@@ -240,7 +257,7 @@ int val ;
 			return( TRUE ) ;
 		    }
 		    break ;
-		case 's':	/* size selection */
+		case 's':       /* size selection */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%d", &val ) ;
 			if ( val < 1 ) {
@@ -291,6 +308,8 @@ int val ;
  *   11  art 2.3
  *   12  RenderMan RIB format
  *   13  Autodesk DXF format
+ *   14  Wavefront OBJ format
+ *   15  RenderWare RWX format
  * -c - output true curved descriptions
  * -t - output tessellated triangle descriptions
  *
@@ -298,10 +317,10 @@ int val ;
  * some of these are useless for the various routines - we're being a bit
  * lazy here...
  */
-int	lib_read_get_opts( argc, argv, p_rdr, p_curve, p_infname )
-int	argc ;
-char	*argv[] ;
-int	*p_rdr, *p_curve ;
+int     lib_read_get_opts( argc, argv, p_rdr, p_curve, p_infname )
+int     argc ;
+char    *argv[] ;
+int     *p_rdr, *p_curve ;
 char *p_infname;
 {
 int num_arg ;
@@ -312,13 +331,13 @@ int val ;
     while ( ++num_arg < argc ) {
 	if ( (*argv[num_arg] == '-') || (*argv[num_arg] == '/') ) {
 	    switch( argv[num_arg][1] ) {
-		case 'c':	/* true curve output */
+		case 'c':       /* true curve output */
 		    *p_curve = OUTPUT_CURVES ;
 		    break ;
-		case 't':	/* tessellated curve output */
+		case 't':       /* tessellated curve output */
 		    *p_curve = OUTPUT_PATCHES ;
 		    break ;
-		case 'f':	/* input file name */
+		case 'f':       /* input file name */
 		    if ( p_infname == NULL ) {
 			fprintf( stderr, "-f option not allowed\n" ) ;
 			show_read_usage();
@@ -333,7 +352,7 @@ int val ;
 			}
 		    }
 		    break ;
-		case 'r':	/* renderer selection */
+		case 'r':       /* renderer selection */
 		    if ( ++num_arg < argc ) {
 			sscanf( argv[num_arg], "%d", &val ) ;
 			if ( val < OUTPUT_VIDEO || val >= OUTPUT_DELAYED ) {
@@ -377,8 +396,9 @@ lib_clear_database()
     gOutfile = stdout;
     gTexture_name = NULL;
     gTexture_count = 0;
+    gObject_count = 0;
     gTexture_ior = 1.0;
-    gRT_out_format = OUTPUT_POVRAY_10;
+    gRT_out_format = OUTPUT_RT_DEFAULT;
     gU_resolution = OUTPUT_RESOLUTION;
     gV_resolution = OUTPUT_RESOLUTION;
     SET_COORD3(gBkgnd_color, 0.0, 0.0, 0.0);
@@ -417,6 +437,19 @@ lib_clear_database()
     /* Deallocate polygon buffer */
     if (gPoly_vbuffer != NULL)
 	lib_storage_shutdown();
+
+    /* Clear vertex counters for polygons */
+    gVertex_count = 0; /* Vertex coordinates */
+    gNormal_count = 0; /* Vertex normals */
+
+    /* Clear out the polygon stack */
+    to1 = gPolygon_stack;
+    while (to1 != NULL) {
+	to2 = to1;
+	to1 = to1->next_object;
+	free(to2);
+    }
+    gPolygon_stack = NULL;
 }
 
 /*-----------------------------------------------------------------*/
@@ -434,6 +467,8 @@ lib_flush_definitions()
        case OUTPUT_RAYSHADE:
        case OUTPUT_POVRAY_20:
        case OUTPUT_PLG:
+       case OUTPUT_OBJ:
+       case OUTPUT_RWX:
        case OUTPUT_RAWTRI:
 	    lib_output_viewpoint(gViewpoint.from, gViewpoint.at, gViewpoint.up, gViewpoint.angle,
 		    gViewpoint.aspect, gViewpoint.hither, gViewpoint.resx, gViewpoint.resy);
@@ -457,8 +492,7 @@ lib_flush_definitions()
 	    exit(1);
     }
 
-    if (gRT_out_format == OUTPUT_PLG) {
+    if (gRT_out_format == OUTPUT_PLG)
 	/* An extra step is needed to build the polygon file. */
 	dump_plg_file();
-    }
 }

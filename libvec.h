@@ -32,17 +32,20 @@ void lib_create_translate_matrix PARAMS((MATRIX mx, COORD3 vec));
 void lib_create_scale_matrix PARAMS((MATRIX mx, COORD3 vec));
 void lib_create_rotate_matrix PARAMS((MATRIX mx, int axis, double angle));
 void lib_create_axis_rotate_matrix PARAMS((MATRIX mx, COORD3 rvec,
-				           double angle));
+				       double angle));
 void lib_create_canonical_matrix PARAMS((MATRIX trans, MATRIX itrans,
-				         COORD3 origin, COORD3 up));
+				  COORD3 origin, COORD3 up));
 void lib_create_view_matrix PARAMS((MATRIX T, COORD3 from, COORD3 at,
-				    COORD3 up, int xres, int yres,
-				    double angle, double aspect));
+				   COORD3 up, int xres, int yres,
+				  double angle, double aspect));
 void lib_transform_coord PARAMS((COORD4 vres, COORD4 vec, MATRIX mx));
 void lib_transform_point PARAMS((COORD3 vres, COORD3 vec, MATRIX mx));
 void lib_transform_vector PARAMS((COORD3 vres, COORD3 vec, MATRIX mx));
+void lib_transform_normal PARAMS((COORD3 vres, COORD3 vec, MATRIX mx));
 void lib_transpose_matrix PARAMS((MATRIX mxres, MATRIX mx));
 void lib_matrix_multiply PARAMS((MATRIX mxres, MATRIX mx1, MATRIX mx2));
+double lib_matrix_det4x4 PARAMS((MATRIX));
+void lib_invert_matrix PARAMS((MATRIX, MATRIX));
 void lib_rotate_cube_face PARAMS((COORD3 vec, int major_axis, int mod_face));
 int lib_clip_to_box PARAMS((COORD3 start, COORD3 end,  double bounds[2][3]));
 double lib_normalize_vector PARAMS((COORD3 cvec));

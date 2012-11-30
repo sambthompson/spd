@@ -1,7 +1,7 @@
 STANDARD PROCEDURAL DATABASES, by Eric Haines, 3D/Eye, Inc.
 
 [Created while under contract to Hewlett-Packard FSD and HP Laboratories]
-Version 3.4, as of 10/21/94
+Version 3.6, as of 4/3/95
     address: 3D/Eye, Inc., 1050 Craft Road, Ithaca, NY 14850
     email: erich@eye.com
 
@@ -36,7 +36,14 @@ Version 3.2 released May, 1994 - added RIB output, readdxf added, more updates
 Version 3.3 released June, 1994 - added DXF output, more lib splitting, etc
 Version 3.3f4 released August, 1994 - fixes to Mac files (see README.MAC),
     error handling for Mac added to readnff program.
-Version 3.4 released October, 1994 - Larry Gritz fixes to RenderMan output.
+Version 3.4 released October, 1994 - Larry Gritz fixed RenderMan output.
+Version 3.5 released November, 1994 - Alexander Enzmann fixed PLG output and
+    added Wavefront OBJ output and RenderWare RWX output, and Wavefront OBJ
+    reader "readobj".  Deleted Mac binary files from distribution (too much
+    trouble, and a Mac sit version is distributed separately).
+Version 3.6 released April, 1995 - vertex order fixes by Enzmann and Michael
+    Jones, Enzmann added jacks and transformation support, other minor cleanup.
+    drv_hp.c changed to reflect changes to view transform output.
 
 
 {These files use tab characters worth 8 spaces}
@@ -79,9 +86,9 @@ checkerboard.
 
     The SPD package is available via anonymous FTP from:
 
-	freedom.graphics.cornell.edu [128.84.247.85]
-	weedeater.math.yale.edu [130.132.23.17]
-	cs.uoregon.edu [128.223.4.13]
+	[ftp.]princeton.edu:/pub/Graphics/SPD
+	avalon.chinalake.navy.mil:/pub/utils/SPD
+	wuarchive.wustl.edu:/graphics/graphics/SPD (I think! Hard to get on!)
 
 among others.  For those without FTP access, write to the netlib automatic
 mailer:  research!netlib and netlib@ornl.gov are the sites.  Send a one line
@@ -92,28 +99,17 @@ the latest version of the SPD package.
 File Structure
 --------------
 
-    Eight different procedural database generators are included.  These were
-designed to span a fair range of primitives, modeling structures, lighting and
-surface parameters, background conditions, and other factors.  A complexity
-factor is provided within each program to control the size of the database
-generated.
-
-This software package contains the following files:
-
-    README - what you are now reading
-    NFF - a description of the Neutral File Format used in the SPD
-    patchlevel.h - keeps track of patch level
-    makefile - used to make the programs (in HP-UX Unix)
-    def.h - some useful "C" definitions
-    lib.h - globals and library routine declarations
-    lib.c - library of routines
-    balls.c - fractal ball object (a.k.a. sphereflake) generator
-    gears.c - 3D array of interlocking gears generator
-    mount.c - fractal mountain and 4 glass ball generator
-    rings.c - pyramid of dodecahedral rings generator
-    teapot.c - the famous teapot on a checkerboard generator
-    tetra.c - recursive tetrahedra generator
-    tree.c - tree generator
+    Various different procedural database generators are included.  The
+original programs were:  balls, gears, mount, rings, tetra, and tree, and so
+these are more commonly used for performance testing.  The teapot generator
+was added due to popular request (what with it being the sixth platonic solid
+and all).  These models were designed to span a fair range of primitives,
+modeling structures, lighting and surface parameters, background conditions,
+and other factors.  There are also shell and lattice generators just for
+amusement, and a sombrero height field generator to show off this type of
+output (which is not a part of NFF, but is useful for other types of output).
+A complexity factor is provided within each program to control the size of the
+database generated.  See the MANIFEST for a description of each file.
 
     The compiled and linked programs will output a database in ASCII to stdout
 containing viewing parameters, lighting conditions, material properties, and
@@ -146,9 +142,12 @@ algorithm's time changes as the complexity increases.
     To generate the databases, simply type the name of the database and direct
 the output as desired, e.g. "balls > balls.nff" creates the default sized
 database and sends the output to balls.nff.  A new feature in 3.0 is that you
-can enter the size factor on the command line, e.g. "balls 2 > balls.nff"
-gives a much smaller database of 91 spheres.  See the header of the database C
-file (e.g. "balls.c") for how the size factor affects the output.
+can enter the size factor on the command line, e.g.  "balls 2 > balls.nff"
+gives a much smaller database of 91 spheres.  You can also decide to output in
+true curved or polygonal mesh modes, and can also choose from a variety of
+output modes other than NFF.  Typing "balls -?" gives a summary.  See the
+header of the database C file (e.g. "balls.c") for how the size factor
+affects the output.
 
     Other parameters in the code itself (for example, branching angles for
 "tree.c" and the fractal dimension in "mount.c") are included for your own
@@ -156,8 +155,9 @@ enjoyment, and so normally should not be changed if the database is used for
 timing tests.  Because the hashing function in the original release of
 "mount.c" is not very good (at low resolutions there is patterning), there is
 a better hashing function provided which can be turned on by defining
-NEW_HASH.  Use the old hashing function (i.e.  don't change anything) for
-consistency with previously published results.
+NEW_HASH.  Use the old hashing function (i.e. don't change anything) for
+consistency with previously published results, use the new one for better
+results.
 
     Since the SPD package is designed to test efficiency, the actual shading
 of the images is mostly irrelevant.  All that matters is that reflective
@@ -177,9 +177,9 @@ statistics.  A simple formula for a relative intensity (i.e. between 0 and
     If you desire a model for a good scene description language, NFF is not
 it.  Instead, you should look at Craig Kolb's ray-tracer language, which is
 part of his excellent RayShade ray tracer, available via anonymous FTP from
-weedeater.math.yale.edu [130.132.23.17].  Of the public domain ray tracers,
-this is the one to beat in speed.  Also included in his distribution is an awk
-filter which converts NFF files to his language.
+princeton.edu:/pub/Graphics, or at POV-Ray, at ftp.povray.org.  Of the public
+domain ray tracers, Rayshade is the one to beat for speed, POV for popularity
+(especially on the PC).
 
     The programs all attempt to minimize program size (for ease in
 distributing) and memory usage, and none allocate any dynamic memory.  As
@@ -220,7 +220,7 @@ rings:  Objects with six pentagonal rings form a pyramid against a background
     all of the objects partially or fully obscured.
 
 teapot:  The famous teapot on a checkerboard.  There are a number of
-    variations on the teapot database, i.e.  whether the bottom is included
+    variations on the teapot database, i.e. whether the bottom is included
     (the IEEE CG&A article added a bottom), variations in the control points
     on the lid (which creates thin, almost degenerate triangles), etc.  For
     this database generator, the bottom is created, and the degenerate

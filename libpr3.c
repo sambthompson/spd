@@ -29,7 +29,7 @@ static unsigned int hfcount = 0;
 static char *
 create_height_file(filename, height, width, data, type)
     char *filename;
-    unsigned int height, width;
+    int height, width;
     float **data;
     int type;
 {
@@ -97,11 +97,12 @@ void
 lib_output_height(filename, data, height, width, x0, x1, y0, y1, z0, z1)
     char *filename;
     float **data;
-    unsigned int height, width;
+    int height, width;
     double x0, x1;
     double y0, y1;
     double z0, z1;
 {
+    MATRIX txmat;
     object_ptr new_object;
 
     if (gRT_out_format == OUTPUT_DELAYED) {
@@ -116,6 +117,16 @@ lib_output_height(filename, data, height, width, x0, x1, y0, y1, z0, z1)
 	new_object->object_type  = HEIGHT_OBJ;
 	new_object->curve_format = OUTPUT_CURVES;
 	new_object->surf_index   = gTexture_count;
+	if (lib_tx_active()) {
+	    lib_get_current_tx(txmat);
+	    new_object->tx = malloc(sizeof(MATRIX));
+	    if (new_object->tx == NULL)
+	       return;
+	    else
+	       memcpy(new_object->tx, txmat, sizeof(MATRIX));
+	    }
+	else
+	   new_object->tx = NULL;
 	new_object->object_data.height.width = width;
 	new_object->object_data.height.height = height;
 	new_object->object_data.height.data = data;
@@ -133,14 +144,16 @@ lib_output_height(filename, data, height, width, x0, x1, y0, y1, z0, z1)
 	    case OUTPUT_VIDEO:
 	    case OUTPUT_NFF:
 	    case OUTPUT_PLG:
+	    case OUTPUT_OBJ:
 	    case OUTPUT_QRT:
 	    case OUTPUT_RTRACE:
 	    case OUTPUT_VIVID:
 	    case OUTPUT_RAWTRI:
 	    case OUTPUT_RIB:
 	    case OUTPUT_DXF:
+	    case OUTPUT_RWX:
 		lib_output_polygon_height(height, width, data,
-					  x0, x1, y0, y1, z0, z1);
+				          x0, x1, y0, y1, z0, z1);
 		break;
 	    case OUTPUT_POVRAY_10:
 	    case OUTPUT_POVRAY_20:
@@ -167,6 +180,9 @@ lib_output_height(filename, data, height, width, x0, x1, y0, y1, z0, z1)
 		    fprintf(gOutfile, "translate <%g, %g, %g>\n", x0, y0, z0);
 		}
 
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
+
 		if (gTexture_name != NULL) {
 		    tab_indent();
 		    fprintf(gOutfile, "texture { %s }", gTexture_name);
@@ -186,6 +202,8 @@ lib_output_height(filename, data, height, width, x0, x1, y0, y1, z0, z1)
 		fprintf(gOutfile, "scale <%g, 1, %g> ",
 			fabs(x1-x0), fabs(z1-z0));
 		fprintf(gOutfile, "translate <%g, %g, %g> ", x0, y0, z0);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " %s", gTexture_name);
 		fprintf(gOutfile, " }\n");
@@ -203,6 +221,8 @@ lib_output_height(filename, data, height, width, x0, x1, y0, y1, z0, z1)
 		fprintf(gOutfile, "scale  %g 1 %g ",
 			fabs(x1 - x0), fabs(z1 - z0));
 		fprintf(gOutfile, "translate  %g %g %g ", x0, y0, z0);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		fprintf(gOutfile, "\n");
 		break;
 
@@ -213,6 +233,9 @@ lib_output_height(filename, data, height, width, x0, x1, y0, y1, z0, z1)
 		tab_indent();
 		fprintf(gOutfile, "geometry {\n");
 		tab_inc();
+
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 
 		tab_indent();
 		fprintf(gOutfile, "translate(%g, %g, %g)\n", x0, y0, z0);
@@ -241,6 +264,7 @@ lib_output_torus(center, normal, iradius, oradius, curve_format)
     double iradius, oradius;
     int curve_format;
 {
+    MATRIX txmat;
     object_ptr new_object;
     double len, xang, zang;
 
@@ -253,6 +277,16 @@ lib_output_torus(center, normal, iradius, oradius, curve_format)
 	new_object->object_type  = TORUS_OBJ;
 	new_object->curve_format = curve_format;
 	new_object->surf_index   = gTexture_count;
+	if (lib_tx_active()) {
+	    lib_get_current_tx(txmat);
+	    new_object->tx = malloc(sizeof(MATRIX));
+	    if (new_object->tx == NULL)
+	       return;
+	    else
+	       memcpy(new_object->tx, txmat, sizeof(MATRIX));
+	    }
+	else
+	   new_object->tx = NULL;
 	COPY_COORD3(new_object->object_data.torus.center, center);
 	COPY_COORD3(new_object->object_data.torus.normal, normal);
 	new_object->object_data.torus.iradius = iradius;
@@ -267,9 +301,11 @@ lib_output_torus(center, normal, iradius, oradius, curve_format)
 	    case OUTPUT_QRT:
 	    case OUTPUT_POVRAY_10:
 	    case OUTPUT_PLG:
+	    case OUTPUT_OBJ:
 	    case OUTPUT_RTRACE:
 	    case OUTPUT_RAWTRI:
 	    case OUTPUT_DXF:
+	    case OUTPUT_RWX:
 		lib_output_polygon_torus(center, normal, iradius, oradius);
 		break;
 	    case OUTPUT_POVRAY_20:
@@ -306,6 +342,8 @@ lib_output_torus(center, normal, iradius, oradius, curve_format)
 		    fprintf(gOutfile, "translate <%g, %g, %g>\n",
 			    center[X], center[Y], center[Z]);
 		}
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 
 		if (gTexture_name != NULL) {
 		    tab_indent();
@@ -325,6 +363,8 @@ lib_output_torus(center, normal, iradius, oradius, curve_format)
 		fprintf(gOutfile, ", <%g, %g, %g>, <%g, %g, %g>",
 			center[X], center[Y], center[Z],
 			normal[X], normal[Y], normal[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " %s", gTexture_name);
 		fprintf(gOutfile, " }\n");
@@ -335,10 +375,14 @@ lib_output_torus(center, normal, iradius, oradius, curve_format)
 		fprintf(gOutfile, "torus ");
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, "%s ", gTexture_name);
-		fprintf(gOutfile, " %g %g %g %g %g %g %g %g\n",
+		fprintf(gOutfile, " %g %g %g %g %g %g %g %g ",
 			iradius, oradius,
 			center[X], center[Y], center[Z],
 			normal[X], normal[Y], normal[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
+		fprintf(gOutfile, "\n");
+
 		break;
 
 	    case OUTPUT_ART:
@@ -346,12 +390,34 @@ lib_output_torus(center, normal, iradius, oradius, curve_format)
 		fprintf(gOutfile, "torus {\n");
 		tab_inc();
 
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
+
 		tab_indent();
-		fprintf(gOutfile,
-		"radius %g  center(%g, %g, %g)  radius %g  center(%g, %g, %g)\n",
-			  iradius, oradius,
-			  center[X], center[Y], center[Z],
-			  normal[X], normal[Y], normal[Z]);
+		fprintf(gOutfile, "center(0, 0, 0)  radius %g radius %g\n",
+			iradius, oradius);
+
+		(void)lib_normalize_vector(normal);
+		axis_to_z(normal, &xang, &zang);
+
+		if (ABSOLUTE(xang) > EPSILON) {
+		    tab_indent();
+		    fprintf(gOutfile, "rotate (%g, x)\n", xang);
+		}
+		if (ABSOLUTE(zang) > EPSILON) {
+		    tab_indent();
+		    fprintf(gOutfile, "rotate (%g, y)\n", zang);
+		}
+
+
+		if (ABSOLUTE(center[X]) > EPSILON ||
+		    ABSOLUTE(center[Y]) > EPSILON ||
+		    ABSOLUTE(center[Z]) > EPSILON) {
+		    tab_indent();
+		    fprintf(gOutfile, "translate (%g, %g, %g)\n",
+			    center[X], center[Y], center[Z]);
+		}
+
 		tab_dec();
 		tab_indent();
 		fprintf(gOutfile, "}\n");

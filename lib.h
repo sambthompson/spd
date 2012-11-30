@@ -86,10 +86,10 @@
  *           Added RIB file output
  *
  * Modified: 3 May 1994
- *	     Eric Haines
- *	     Split lib_get_opts to lib_gen_get_opts and lib_read_get_opts,
- *	     since the read*.c programs are functionally different than the
- *	     database generators.  Also split show_usage.
+ *           Eric Haines
+ *           Split lib_get_opts to lib_gen_get_opts and lib_read_get_opts,
+ *           since the read*.c programs are functionally different than the
+ *           database generators.  Also split show_usage.
  *
  * Modified: 6 May 1994
  *           Eduard [esp] Schwan
@@ -103,6 +103,19 @@
  *           Various changes from esp added, and put in primitive DXF output.
  *           Named version 3.3 now to differentiate from DXF-less output
  *           version Eduard is distributing.
+ *
+ * Modified: 15 November 1994
+ *           Alexander R. Enzmann
+ *           Added code for Wavefront OBJ files and RenderWare RWX files.
+ *           Adding code for transformation stacks, file jacks.c demonstrates
+ *           how they work.  Fixed PLG output.  Fixed ART output of tori
+ *           and added ART output of discs.  Modified Polyray and POV-Ray
+ *           viewpoints to give right handed coordinates.  Added the
+ *           file readobj.c to read WaveFront polygon files.  Added routines
+ *           to invert matrices, transform normals, and determine
+ *           rotate/scale/translate from a transform matrix. Modified
+ *           computation of perspective view matrix to be a little cleaner.
+ *
  */
 
 
@@ -117,7 +130,7 @@ extern "C" {
 #endif
 
 /* The version of this Library, see lib_get_version_str() */
-#define LIB_VERSION	"3.3"
+#define LIB_VERSION     "3.3"
 
 /* Raytracers supported by this package (default OUTPUT_POVRAY): */
 
@@ -127,18 +140,20 @@ extern "C" {
 #define OUTPUT_VIDEO      0 /* Output direct to the screen (sys dependent) */
 #define OUTPUT_NFF        1 /* MTV                                         */
 #define OUTPUT_POVRAY_10  2 /* POV-Ray 1.0                                 */
-#define OUTPUT_POLYRAY    3 /* Polyray v1.4, v1.5                          */
+#define OUTPUT_POLYRAY    3 /* Polyray v1.4 -> v1.8                        */
 #define OUTPUT_VIVID      4 /* Vivid 2.0                                   */
 #define OUTPUT_QRT        5 /* QRT 1.5                                     */
 #define OUTPUT_RAYSHADE   6 /* Rayshade                                    */
 #define OUTPUT_POVRAY_20  7 /* POV-Ray 2.0 (format is subject to change)   */
 #define OUTPUT_RTRACE     8 /* RTrace 8.0.0                                */
-#define OUTPUT_PLG        9 /* PLG format for use with "rend386"           */
+#define OUTPUT_PLG        9 /* PLG format for use with REND386/Avril       */
 #define OUTPUT_RAWTRI    10 /* Raw triangle output                         */
 #define OUTPUT_ART       11 /* Art 2.3                                     */
 #define OUTPUT_RIB       12 /* RenderMan RIB format                        */
 #define OUTPUT_DXF       13 /* Autodesk DXF format                         */
-#define OUTPUT_DELAYED   14 /* Needed for RTRACE/PLG output.
+#define OUTPUT_OBJ       14 /* Wavefront OBJ format                        */
+#define OUTPUT_RWX       15 /* RenderWare RWX script file                  */
+#define OUTPUT_DELAYED   16 /* Needed for RTRACE/PLG output.
 			       When this is used, all definitions will be
 			       stored rather than immediately dumped.  When
 			       all definitions are complete, use the call
@@ -148,7 +163,7 @@ extern "C" {
 #define OUTPUT_RT_DEFAULT   OUTPUT_NFF
 
 /* Sets raw triangle output format to include texture name */
-#define RAWTRI_WITH_TEXTURES    0	/* set to 1 to include texture */
+#define RAWTRI_WITH_TEXTURES    0       /* set to 1 to include texture */
 
 #define OUTPUT_RESOLUTION       4       /* default amount of polygonalization */
 
@@ -160,8 +175,8 @@ extern "C" {
 #define OUTPUT_PATCHES          1       /* polygonal patches output */
 
 /* polygon stuff for libply.c and lib.c */
-#define VBUFFER_SIZE	1024
-#define POLYEND_SIZE	512
+#define VBUFFER_SIZE    1024
+#define POLYEND_SIZE    512
 
 /*-----------------------------------------------------------------*/
 /* The following type definitions are used to build & store the database
@@ -264,6 +279,7 @@ struct object_struct {
    unsigned int object_type;  /* Identify what kind of object */
    unsigned int curve_format; /* Output as surface or as polygons? */
    unsigned int surf_index;   /* Which surface was associated with this object? */
+   MATRIX *tx;                /* Was there a matrix associated with this object? */
    union {
       struct box_struct       box;
       struct cone_struct      cone;
@@ -295,6 +311,7 @@ extern FILE *gOutfile;
 extern char *gTexture_name;
 extern int  gTexture_count;
 extern double gTexture_ior;
+extern int gObject_count;
 extern int  gRT_out_format;
 extern int  gRT_orig_format;
 extern int  gU_resolution;
@@ -311,14 +328,16 @@ extern light_ptr gLib_lights;
 extern viewpoint gViewpoint;
 
 /* Globals for tracking indentation level of output file */
-extern int	gTab_width;
-extern int	gTab_level;
+extern int      gTab_width;
+extern int      gTab_level;
 
 /*-----------------------------------------------------------------*/
 /* Global variables - libply.h */
 /*-----------------------------------------------------------------*/
 /* Polygon stack for making PLG files */
 extern object_ptr gPolygon_stack;
+extern unsigned long gVertex_count; /* Vertex coordinates */
+extern unsigned long gNormal_count; /* Vertex normals */
 
 /* Storage for polygon indices */
 extern unsigned int *gPoly_vbuffer;
@@ -335,15 +354,15 @@ extern int gPoly_Axis2;
 
 /*==== Prototypes from libinf.c ====*/
 
-void	tab_indent PARAMS((void));
-void	tab_inc PARAMS((void));
-void	tab_dec PARAMS((void));
-char *	lib_get_version_str PARAMS((void));
-void	lib_set_output_file PARAMS((FILE *new_outfile));
-void	lib_set_default_texture PARAMS((char *default_texture));
-void	lib_set_raytracer PARAMS((int default_tracer));
-void	lib_set_polygonalization PARAMS((int u_steps, int v_steps));
-void	lookup_surface_stats PARAMS((int index, int *tcount, double *tior));
+void    tab_indent PARAMS((void));
+void    tab_inc PARAMS((void));
+void    tab_dec PARAMS((void));
+char *  lib_get_version_str PARAMS((void));
+void    lib_set_output_file PARAMS((FILE *new_outfile));
+void    lib_set_default_texture PARAMS((char *default_texture));
+void    lib_set_raytracer PARAMS((int default_tracer));
+void    lib_set_polygonalization PARAMS((int u_steps, int v_steps));
+void    lookup_surface_stats PARAMS((int index, int *tcount, double *tior));
 
 
 /*==== Prototypes from libpr1.c ====*/
@@ -479,7 +498,7 @@ void lib_output_sq_sphere PARAMS((COORD4 center_pt, double a1, double a2,
 /*==== Prototypes from libpr3.c ====*/
 
 /*-----------------------------------------------------------------*/
-void lib_output_height PARAMS((char *, float **, unsigned int, unsigned int,
+void lib_output_height PARAMS((char *, float **, int, int,
 			       double, double, double, double, double, double));
 
 
@@ -491,50 +510,82 @@ void lib_output_torus PARAMS((COORD3 center, COORD3 normal,
 
 /*==== Prototypes from libini.c ====*/
 
-int		lib_open PARAMS((int raytracer_format, char *filename));
+int     lib_open PARAMS((int raytracer_format, char *filename));
 
-void	lib_close PARAMS((void));
+void    lib_close PARAMS((void));
 
-void	lib_storage_initialize PARAMS((void));
+void    lib_storage_initialize PARAMS((void));
 
-void	lib_storage_shutdown PARAMS((void));
+void    lib_storage_shutdown PARAMS((void));
 
-void	show_gen_usage PARAMS((void));
-void	show_read_usage PARAMS((void));
+void    show_gen_usage PARAMS((void));
+void    show_read_usage PARAMS((void));
 
-int		lib_gen_get_opts PARAMS((int argc, char *argv[],
-			int *p_size, int *p_rdr, int *p_curve));
-int		lib_read_get_opts PARAMS((int argc, char *argv[],
-			int *p_rdr, int *p_curve, char *p_infname));
+int     lib_gen_get_opts PARAMS((int argc, char *argv[],
+				 int *p_size, int *p_rdr, int *p_curve));
+int     lib_read_get_opts PARAMS((int argc, char *argv[],
+				  int *p_rdr, int *p_curve, char *p_infname));
 
-void	lib_clear_database PARAMS((void));
-void	lib_flush_definitions PARAMS((void));
+void    lib_clear_database PARAMS((void));
+void    lib_flush_definitions PARAMS((void));
 
 
 /*==== Prototypes from libply.c ====*/
 
-void	lib_output_polygon_cylcone PARAMS((COORD4 base_pt, COORD4 apex_pt));
-void	lib_output_polygon_disc PARAMS((COORD3 center, COORD3 normal,
-							double iradius, double oradius));
-void	lib_output_polygon_sphere PARAMS((COORD4 center_pt));
-void	lib_output_polygon_height PARAMS((unsigned int height, unsigned int width, float **data,
-							double x0, double x1,
-							double y0, double y1,
-							double z0, double z1));
-void	lib_output_polygon_torus PARAMS((COORD3 center, COORD3 normal,
-							double iradius, double oradius));
-void	lib_output_polygon_box PARAMS((COORD3 p1, COORD3 p2));
-void	lib_output_polygon PARAMS((int tot_vert, COORD3 vert[]));
-void	lib_output_polypatch PARAMS((int tot_vert, COORD3 vert[], COORD3 norm[]));
+void    lib_output_polygon_cylcone PARAMS((COORD4 base_pt, COORD4 apex_pt));
+void    lib_output_polygon_disc PARAMS((COORD3 center, COORD3 normal,
+				                        double iradius, double oradius));
+void    lib_output_polygon_sphere PARAMS((COORD4 center_pt));
+void    lib_output_polygon_height PARAMS((int height, int width, float **data,
+				                        double x0, double x1,
+				                        double y0, double y1,
+				                        double z0, double z1));
+void    lib_output_polygon_torus PARAMS((COORD3 center, COORD3 normal,
+				                        double iradius, double oradius));
+void    lib_output_polygon_box PARAMS((COORD3 p1, COORD3 p2));
+void    lib_output_polygon PARAMS((int tot_vert, COORD3 vert[]));
+void    lib_output_polypatch PARAMS((int tot_vert, COORD3 vert[], COORD3 norm[]));
 
 
 /*==== Prototypes from libdmp.c ====*/
 
-void	dump_plg_file PARAMS((void));
-void	dump_all_objects PARAMS((void));
-void	dump_reorder_surfaces PARAMS((void));
-void	dump_all_lights PARAMS((void));
-void	dump_all_surfaces PARAMS((void));
+void    dump_plg_file PARAMS((void));
+void    dump_obj_file PARAMS((void));
+void    dump_all_objects PARAMS((void));
+void    dump_reorder_surfaces PARAMS((void));
+void    dump_all_lights PARAMS((void));
+void    dump_all_surfaces PARAMS((void));
+
+/*==== Prototypes from libtx.c ====*/
+#define U_SCALEX   0
+#define U_SCALEY   1
+#define U_SCALEZ   2
+#define U_SHEARXY  3
+#define U_SHEARXZ  4
+#define U_SHEARYZ  5
+#define U_ROTATEX  6
+#define U_ROTATEY  7
+#define U_ROTATEZ  8
+#define U_TRANSX   9
+#define U_TRANSY  10
+#define U_TRANSZ  11
+#define U_PERSPX  12
+#define U_PERSPY  13
+#define U_PERSPZ  14
+#define U_PERSPW  15
+
+
+int lib_tx_active PARAMS((void));         /* Is a transform active? */
+void lib_get_current_tx PARAMS((MATRIX)); /* Get the current transform */
+void lib_set_current_tx PARAMS((MATRIX)); /* Replace the current transform */
+void lib_output_tx_sequence PARAMS((void)); /* Write transform */
+void lib_tx_pop PARAMS((void));           /* Pop off the top transform */
+void lib_tx_push PARAMS((void));          /* Push the current transform */
+void lib_tx_rotate PARAMS((int, double)); /* Rotate about a single axis (radians) */
+void lib_tx_scale PARAMS((COORD3));       /* Scale on each axis */
+void lib_tx_translate PARAMS((COORD3));   /* Add a translation */
+int lib_tx_unwind PARAMS((MATRIX, double *)); /* Turn tx into rotate/scale/translate */
+extern MATRIX IdentityTx; /* Identity matrix.  Don't write into this! */
 
 #if __cplusplus
 }

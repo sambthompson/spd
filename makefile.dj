@@ -6,11 +6,11 @@ CC2=gcc -m486 -s
 SUFOBJ=.o
 SUFEXE=.exe
 INC=def.h lib.h
-LIBOBJ=drv_ibm$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) libvec$(SUFOBJ)
+LIBOBJ=drv_ibm$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) libvec$(SUFOBJ) libtx$(SUFOBJ)
 BASELIB=-lgrx -lm
 
 all:		balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells
+		sample lattice shells jacks
 
 drv_ibm$(SUFOBJ):	$(INC) drv_ibm.c drv.h
 		$(CC) -DGRX -c drv_ibm.c
@@ -38,6 +38,9 @@ libdmp$(SUFOBJ):	$(INC) libdmp.c
 
 libvec$(SUFOBJ):	$(INC) libvec.c
 		$(CC) -c libvec.c
+
+libtx$(SUFOBJ):		$(INC) libtx.c
+		$(CC) -c libtx.c
 
 balls$(EXE):		$(LIBOBJ) balls.c
 		$(CC) -o balls$(EXE) balls.c $(LIBOBJ) $(BASELIB)
@@ -99,6 +102,11 @@ shells$(EXE):		$(LIBOBJ) shells.c
 		aout2exe $*
 		@del $* >nul
 
+jacks$(EXE):		$(LIBOBJ) jacks.c
+		$(CC) -o jacks$(EXE) jacks.c $(LIBOBJ) $(BASELIB)
+		aout2exe $*
+		@del $* >nul
+
 clean:
 		@del balls.exe >nul
 		@del gears.exe >nul
@@ -112,5 +120,6 @@ clean:
 		@del sample.exe >nul
 		@del lattice.exe >nul
 		@del shells.exe >nul
+		@del jacks.exe >nul
 		@del *.o >nul
 		@echo Clean done.

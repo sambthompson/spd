@@ -1,26 +1,26 @@
 /*
  * tree.c - Creates a tree using Aono & Kunii's generation method.
- *	(See IEEE CG&A May 1984).  A square polygon is placed beneath the
- *	tree to act as a field.  Seven light sources.
+ *      (See IEEE CG&A May 1984).  A square polygon is placed beneath the
+ *      tree to act as a field.  Seven light sources.
  *
  * Author:  Eric Haines, 3D/Eye, Inc.
  *
  * size_factor determines the number of objects output.
- *	Total objects = 2**(SF+1)-1 cones and spheres + 1 square polygon.
+ *      Total objects = 2**(SF+1)-1 cones and spheres + 1 square polygon.
  *
- *	size_factor	# spheres	   # cones	# squares
- *	     1		     3		       3	     1
- *	     2		     7		       7	     1
- *	     3		    15		      15	     1
+ *      size_factor     # spheres          # cones      # squares
+ *           1               3                 3             1
+ *           2               7                 7             1
+ *           3              15                15             1
  *
- *	    11		  4095		    4095	     1
+ *          11            4095              4095             1
  */
 
 #include <stdio.h>
 #include <math.h>
-#include <stdlib.h>	/* atoi */
+#include <stdlib.h>     /* atoi */
 #include "def.h"
-#include "drv.h"	/* display_close() */
+#include "drv.h"        /* display_close() */
 #include "lib.h"
 
 /* These may be read from the command line */
@@ -35,18 +35,18 @@ static FILE * stdout_file = NULL;
 #endif /* OUTPUT_TO_FILE */
 
 /* the following affect the shape of the tree */
-#define	BR_ANGLE_0		40.0
-#define	BR_ANGLE_1		25.0
-#define	BR_CONTR_0		0.65
-#define	BR_CONTR_1		0.70
-#define	BR_DIAMETER		0.67
-#define	DIV_ANGLE		140.0
-#define	WIDTH_HEIGHTH_RATIO	0.15
+#define BR_ANGLE_0              40.0
+#define BR_ANGLE_1              25.0
+#define BR_CONTR_0              0.65
+#define BR_CONTR_1              0.70
+#define BR_DIAMETER             0.67
+#define DIV_ANGLE               140.0
+#define WIDTH_HEIGHTH_RATIO     0.15
 
-static	MATRIX	Rst_mx[2] ;
+static  MATRIX  Rst_mx[2] ;
 
 /* grow tree branches recursively */
-void
+static void
 grow_tree(cur_mx, scale, depth)
     MATRIX cur_mx;
     double scale;
@@ -85,10 +85,10 @@ grow_tree(cur_mx, scale, depth)
  * Set up matrices for growth of each branch with respect to the
  * parent branch, then grow each branch.
  */
-void
+static void
 create_tree()
 {
-    int	i;
+    int i;
     double branch_angle, branch_contraction, divergence;
     MATRIX ident_mx, temp1_mx, temp2_mx, tempr_mx, tempst_mx;
 

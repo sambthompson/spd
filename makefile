@@ -1,27 +1,20 @@
-# makefile for standard procedural databases
-# Author:  Eric Haines, 3D/Eye Inc.
-#   Works on HP 700 machines, might even work for you
-#
-#   NOTE: assumes you've done a
-#	export LDOPTS="-a shared"
-#   before running this makefile (i.e. it uses shared libraries)
+# unix makefile for standard procedural databases
+# Author:  Eric Haines, 3D/Eye, Inc.
 
-CC=cc -O -Aa
+CC=cc -O
 SUFOBJ=.o
 SUFEXE=.exe
 INC=def.h lib.h
-LIBOBJ=drv_hp$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) libvec$(SUFOBJ)
-BASELIB=-L /usr/lib/X11R4 \
-			-lXwindow -lsbdl \
-			-lsb \
-			-lXhp11 -lX11 -ldld \
-			-lm
+LIBOBJ=drv_unix$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) \
+	libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) \
+	libvec$(SUFOBJ) libtx$(SUFOBJ)
+BASELIB=-lm
 
 all:		balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells
+		sample lattice shells jacks
 
-drv_hp$(SUFOBJ):	$(INC) drv_hp.c drv.h
-		$(CC) -c drv_hp.c
+drv_unix$(SUFOBJ):	$(INC) drv_unix.c drv.h
+		$(CC) -c drv_unix.c
 
 libini$(SUFOBJ):	$(INC) libini.c
 		$(CC) -c libini.c
@@ -46,6 +39,9 @@ libdmp$(SUFOBJ):	$(INC) libdmp.c
 
 libvec$(SUFOBJ):	$(INC) libvec.c
 		$(CC) -c libvec.c
+
+libtx$(SUFOBJ):		$(INC) libtx.c
+		$(CC) -c libtx.c
 
 balls$(EXE):		$(LIBOBJ) balls.c
 		$(CC) -o balls$(EXE) balls.c $(LIBOBJ) $(BASELIB)
@@ -83,7 +79,10 @@ lattice$(EXE):		$(LIBOBJ) lattice.c
 shells$(EXE):		$(LIBOBJ) shells.c
 		$(CC) -o shells$(EXE) shells.c $(LIBOBJ) $(BASELIB)
 
+jacks$(EXE):		$(LIBOBJ) jacks.c
+		$(CC) -o jacks$(EXE) jacks.c $(LIBOBJ) $(BASELIB)
+
 clean:
 	rm -f balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells
+		sample lattice shells jacks
 	rm -f $(LIBOBJ)

@@ -24,18 +24,21 @@
 
 
 /*-----------------------------------------------------------------*/
-void lib_output_comment (char *comment)
+void lib_output_comment (comment)
+	char *comment;
 {
     switch (gRT_out_format) {
 
 	case OUTPUT_VIDEO:
 	case OUTPUT_DELAYED:
 	case OUTPUT_RAWTRI:
-	case OUTPUT_DXF:	/* well, there's the 999 format, but... >>>>> */
+	case OUTPUT_DXF:        /* well, there's the 999 format, but... >>>>> */
+	case OUTPUT_RWX:
 		/* no comments allowed for these file formats */
 	    break;
 
 	case OUTPUT_NFF:
+	case OUTPUT_OBJ:
 	case OUTPUT_RIB:
 		fprintf(gOutfile, "# %s\n", comment);
 	    break;
@@ -63,15 +66,17 @@ void lib_output_comment (char *comment)
 
 /*-----------------------------------------------------------------*/
 void lib_output_vector(x, y, z)
-double	x, y, z;
+double  x, y, z;
 {
     switch (gRT_out_format) {
 	case OUTPUT_VIDEO:
 	case OUTPUT_DELAYED:
 	case OUTPUT_DXF:
+	case OUTPUT_RWX:
 	    break;
 
 	case OUTPUT_PLG:
+	case OUTPUT_OBJ:
 	case OUTPUT_NFF:
 	case OUTPUT_VIVID:
 	case OUTPUT_RAYSHADE:
@@ -94,7 +99,6 @@ double	x, y, z;
 	    break;
 	}
 } /* lib_output_vector */
-
 
 
 /*-----------------------------------------------------------------*/
@@ -143,16 +147,18 @@ lib_output_viewpoint(from, at, up,
     double fov_angle, aspect_ratio, hither;
     int    resx, resy;
 {
-    COORD3 axis, myup1, myup, myright, tmp;
+    COORD3 axis, myright, tmp;
     COORD4 viewvec, rightvec;
     MATRIX m1;
-    double twist, xang, yang, len, tmpf;
+    double tmpf;
     double frustrumheight, frustrumwidth;
 
     switch (gRT_out_format) {
 	case OUTPUT_DELAYED:
 	case OUTPUT_VIDEO:
 	case OUTPUT_PLG:
+	case OUTPUT_OBJ:
+	case OUTPUT_RWX:
 	    /* Save the various view parameters */
 	    COPY_COORD3(gViewpoint.from, from);
 	    COPY_COORD3(gViewpoint.at, at);
@@ -164,11 +170,11 @@ lib_output_viewpoint(from, at, up,
 	    gViewpoint.aspect = aspect_ratio;
 
 	    /* Make the 3D clipping box for this view */
-	    gView_bounds[0][0] = -gViewpoint.resx/2;
-	    gView_bounds[1][0] =  gViewpoint.resx/2;
-	    gView_bounds[0][1] = -gViewpoint.resy/2;
-	    gView_bounds[1][1] =  gViewpoint.resy/2;
-	    gView_bounds[0][2] =  gViewpoint.hither;
+	    gView_bounds[0][0] = 0;
+	    gView_bounds[1][0] = gViewpoint.resx;
+	    gView_bounds[0][1] = 0;
+	    gView_bounds[1][1] = gViewpoint.resy;
+	    gView_bounds[0][2] = gViewpoint.hither;
 	    gView_bounds[1][2] = 1.0e10;
 
 	    /* Generate the perspective view matrix */
@@ -229,7 +235,7 @@ lib_output_viewpoint(from, at, up,
 			viewvec[X], viewvec[Y], viewvec[Z]);
 		tab_indent();
 		fprintf(gOutfile, "right <%g %g %g>\n",
-			rightvec[X], rightvec[Y], rightvec[Z]);
+			-rightvec[X], -rightvec[Y], -rightvec[Z]);
 		tab_indent();
 		fprintf(gOutfile, "up <%g %g %g>\n",
 			up[X], up[Y], up[Z]);
@@ -243,7 +249,7 @@ lib_output_viewpoint(from, at, up,
 			viewvec[X], viewvec[Y], viewvec[Z]);
 		tab_indent();
 		fprintf(gOutfile, "right <%g, %g, %g>\n",
-			rightvec[X], rightvec[Y], rightvec[Z]);
+			-rightvec[X], -rightvec[Y], -rightvec[Z]);
 		tab_indent();
 		fprintf(gOutfile, "up <%g, %g, %g>\n",
 			up[X], up[Y], up[Z]);
@@ -267,7 +273,9 @@ lib_output_viewpoint(from, at, up,
 	    tab_indent();
 	    fprintf(gOutfile, "angle %g\n", fov_angle);
 	    tab_indent();
-	    fprintf(gOutfile, "aspect %g\n", aspect_ratio);
+	    /* Note the negative, this is to change to right handed
+	       coordinates (like most of the other tracers) */
+	    fprintf(gOutfile, "aspect %g\n", -aspect_ratio);
 	    tab_indent();
 	    fprintf(gOutfile, "hither %g\n", hither);
 	    tab_indent();
@@ -394,17 +402,17 @@ lib_output_viewpoint(from, at, up,
 	    CROSS(myright,up,axis);
 	    lib_normalize_vector (myright);
 
-	    m1[0][0] = myright[0];  m1[1][0] = myright[1]; 
+	    m1[0][0] = myright[0];  m1[1][0] = myright[1];
 	    m1[2][0] = myright[2];  m1[3][0] = 0;
 	    m1[0][1] = up[0];  m1[1][1] = up[1];
 	    m1[2][1] = up[2]; m1[3][1] = 0;
 	    m1[0][2] = axis[0];  m1[1][2] = axis[1];
 	    m1[2][2] = axis[2];  m1[3][2] = 0;
 	    m1[0][3] = 0;  m1[1][3] = 0;  m1[2][3] = 0;  m1[3][3] = 1;
-	    fprintf (gOutfile, "ConcatTransform [%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g]\n", 
-		     m1[0][0], m1[0][1], m1[0][2], m1[0][3], 
-		     m1[1][0], m1[1][1], m1[1][2], m1[1][3], 
-		     m1[2][0], m1[2][1], m1[2][2], m1[2][3], 
+	    fprintf (gOutfile, "ConcatTransform [%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g]\n",
+		     m1[0][0], m1[0][1], m1[0][2], m1[0][3],
+		     m1[1][0], m1[1][1], m1[1][2], m1[1][3],
+		     m1[2][0], m1[2][1], m1[2][2], m1[2][3],
 		     m1[3][0], m1[3][1], m1[3][2], m1[3][3]);
 	    fprintf (gOutfile, "Translate %g %g %g\n", -from[0], -from[1], -from[2]);
 
@@ -438,6 +446,8 @@ void
 lib_output_light(center_pt)
     COORD4 center_pt;
 {
+    COORD3 vec;
+    MATRIX txmat;
     double lscale;
     light_ptr new_light;
 
@@ -445,6 +455,14 @@ lib_output_light(center_pt)
 	lscale = center_pt[W];
     else
 	lscale = 1.0;
+
+    COPY_COORD3(vec, center_pt)
+    if (lib_tx_active()) {
+	/* Perform transformations of the vertices and normals of
+	   the polygon(s) */
+	lib_get_current_tx(txmat);
+	lib_transform_vector(vec, vec, txmat);
+    }
 
     switch (gRT_out_format) {
 	case OUTPUT_DELAYED:
@@ -460,12 +478,14 @@ lib_output_light(center_pt)
 
 	case OUTPUT_VIDEO:
 	case OUTPUT_PLG:
+	case OUTPUT_OBJ:
+	case OUTPUT_RWX:
 	    /* Not currently doing anything with lights */
 	    break;
 
 	case OUTPUT_NFF:
 	    fprintf(gOutfile, "l %g %g %g\n",
-		    center_pt[X], center_pt[Y], center_pt[Z]);
+		    vec[X], vec[Y], vec[Z]);
 	    break;
 
 	case OUTPUT_POVRAY_10:
@@ -479,7 +499,7 @@ lib_output_light(center_pt)
 
 	    tab_indent();
 	    fprintf(gOutfile, "<%g %g %g>",
-		    center_pt[X], center_pt[Y], center_pt[Z]);
+		    vec[X], vec[Y], vec[Z]);
 	    fprintf(gOutfile, " color red %g green %g blue %g\n",
 		    lscale, lscale, lscale);
 
@@ -501,7 +521,7 @@ lib_output_light(center_pt)
 
 	    tab_indent();
 	    fprintf(gOutfile, "<%g, %g, %g>",
-		    center_pt[X], center_pt[Y], center_pt[Z]);
+		    vec[X], vec[Y], vec[Z]);
 	    fprintf(gOutfile, " color red %g green %g blue %g\n",
 		    lscale, lscale, lscale);
 
@@ -516,14 +536,14 @@ lib_output_light(center_pt)
 	    tab_indent();
 	    fprintf(gOutfile, "light <%g, %g, %g>, <%g, %g, %g>\n",
 		    lscale, lscale, lscale,
-		    center_pt[X], center_pt[Y], center_pt[Z]);
+		    vec[X], vec[Y], vec[Z]);
 	    fprintf(gOutfile, "\n");
 	    break;
 
 	case OUTPUT_VIVID:
 	    tab_indent();
 	    fprintf(gOutfile, "light {type point position %g %g %g",
-		    center_pt[X], center_pt[Y], center_pt[Z]);
+		    vec[X], vec[Y], vec[Z]);
 	    fprintf(gOutfile, " color %g %g %g }\n",
 		    lscale, lscale, lscale);
 	    fprintf(gOutfile, "\n");
@@ -532,20 +552,19 @@ lib_output_light(center_pt)
 	case OUTPUT_QRT:
 	    tab_indent();
 	    fprintf(gOutfile, "LAMP ( loc = (%g,%g,%g), dist = 0, radius = 1,",
-		    center_pt[X], center_pt[Y], center_pt[Z]);
+		    vec[X], vec[Y], vec[Z]);
 	    fprintf(gOutfile, " amb = (%g,%g,%g) )\n",
 		    lscale, lscale, lscale);
 	    break;
 
 	case OUTPUT_RAYSHADE:
 	    fprintf(gOutfile, "light %g point %g %g %g\n",
-		    center_pt[W], center_pt[X], center_pt[Y], center_pt[Z]);
+		    lscale, vec[X], vec[Y], vec[Z]);
 	    break;
 
 	case OUTPUT_RTRACE:
 	    fprintf(gOutfile, "1 %g %g %g %g %g %g\n",
-	    center_pt[X], center_pt[Y], center_pt[Z],
-	    center_pt[W], center_pt[W], center_pt[W]);
+	    vec[X], vec[Y], vec[Z], lscale, lscale, lscale);
 	    break;
 
 	case OUTPUT_ART:
@@ -555,7 +574,7 @@ lib_output_light(center_pt)
 
 	    tab_indent();
 	    fprintf(gOutfile, "location(%g, %g, %g)  colour 0.5, 0.5, 0.5\n",
-		   center_pt[X], center_pt[Y], center_pt[Z]);
+		   vec[X], vec[Y], vec[Z]);
 
 	    tab_dec();
 	    tab_indent();
@@ -573,7 +592,7 @@ lib_output_light(center_pt)
 
 	    fprintf(gOutfile, "LightSource \"pointlight\" %d"
 		    " \"from\" [ %#g %#g %#g ] \"intensity\" [20]\n", number++,
-		    center_pt[X], center_pt[Y], center_pt[Z]);
+		    vec[X], vec[Y], vec[Z]);
 	  }
 	    break;
     }
@@ -592,6 +611,8 @@ lib_output_background_color(color)
 	case OUTPUT_VIDEO:
 	case OUTPUT_DELAYED:
 	case OUTPUT_PLG:
+	case OUTPUT_OBJ:
+	case OUTPUT_RWX:
 	    COPY_COORD3(gBkgnd_color, color);
 	    break;
 
@@ -1036,6 +1057,23 @@ lib_output_color(name, color, ka, kd, ks, shine, ang, kt, i_of_r)
 		    (phong_pow > 100.0 ? 100.0 : phong_pow),
 		    kt, kt, kt);
 	    break;
+
+	case OUTPUT_OBJ:
+	    txname = create_surface_name(name, gTexture_count);
+	    fprintf(gOutfile, "usemtl %s\n", txname);
+	    break;
+
+	case OUTPUT_RWX:
+	    tab_indent();
+	    fprintf(gOutfile, "Color %g %g %g\n",
+		    color[X], color[Y], color[Z]);
+	    tab_indent();
+	    fprintf(gOutfile, "Surface %g %g %g\n",
+		    ka, kd, ks);
+	    tab_indent();
+	    fprintf(gOutfile, "Opacity %g\n",
+		    1.0-kt);
+	   break;
 
 	case OUTPUT_RAWTRI:
 	    txname = create_surface_name(name, gTexture_count);

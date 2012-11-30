@@ -424,7 +424,6 @@ parse_nff(fp)
 FILE *fp;
 {
 	int		c;
-	char	errstr[80];
 
 	while ( (c = getc(fp)) != EOF )
 		switch (c) {

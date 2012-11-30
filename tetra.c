@@ -1,36 +1,36 @@
 /*
  * tetra.c - Create a tetrahedral pyramid.  This environment is based on the
- *	scene used by Glassner ("Space Subdivision for Fast Ray Tracing," IEEE
- *	CG&A, October 1984) and Kay & Kajiya ("Ray Tracing Complex Scenes,"
- *	SIGGRAPH '86 Proceedings) for testing their ray tracers.
- *	One light source.
+ *      scene used by Glassner ("Space Subdivision for Fast Ray Tracing," IEEE
+ *      CG&A, October 1984) and Kay & Kajiya ("Ray Tracing Complex Scenes,"
+ *      SIGGRAPH '86 Proceedings) for testing their ray tracers.
+ *      One light source.
  *
  * Author:  Eric Haines, 3D/Eye, Inc.
  *
  * Note:  the view and light positions are the same (after transformation to
- *	a different set of world coordinates) as used by Kay & Kajiya,
- *	courtesy of Tim Kay.  For some reason, the number of shadow rays
- *	generated is different (Kay gets 34K, I get 46K).  One light source.
+ *      a different set of world coordinates) as used by Kay & Kajiya,
+ *      courtesy of Tim Kay.  For some reason, the number of shadow rays
+ *      generated is different (Kay gets 34K, I get 46K).  One light source.
  *
  * size_factor determines the number of polygons output.
- *	Total triangular polygons = 4**SF
+ *      Total triangular polygons = 4**SF
  *
- *	size_factor	# triangles
- *	     1		     4
- *	     2		    16
- *	     3		    64
+ *      size_factor     # triangles
+ *           1               4
+ *           2              16
+ *           3              64
  *
- *	     6		  4096
+ *           6            4096
  */
 
 #include <stdio.h>
 #include <math.h>
-#include <stdlib.h>	/* atoi */
+#include <stdlib.h>     /* atoi */
 #include "def.h"
-#include "drv.h"	/* display_close() */
+#include "drv.h"        /* display_close() */
 #include "lib.h"
 
-static	int	size_factor = 6 ;
+static  int     size_factor = 6 ;
 static int raytracer_format = OUTPUT_RT_DEFAULT;
 static int output_format    = OUTPUT_CURVES;
 
@@ -42,7 +42,7 @@ static FILE * stdout_file = NULL;
 
 
 /* Create tetrahedrons recursively */
-void
+static void
 create_tetra( depth, center )
     int depth ;
     COORD4 center ;
@@ -63,11 +63,11 @@ create_tetra( depth, center )
 		for ( z_dir = -1 ; z_dir <= 1 ; z_dir += 2 ) {
 		    if ( x_dir*y_dir*z_dir == 1 ) {
 			obj_pt[num_vert][X] =
-					center[X] + (double)x_dir * center[W] ;
+				        center[X] + (double)x_dir * center[W] ;
 			obj_pt[num_vert][Y] =
-					center[Y] + (double)y_dir * center[W] ;
+				        center[Y] + (double)y_dir * center[W] ;
 			obj_pt[num_vert][Z] =
-					center[Z] + (double)z_dir * center[W] ;
+				        center[Z] + (double)z_dir * center[W] ;
 			++num_vert ;
 		    }
 		}

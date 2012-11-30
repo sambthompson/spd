@@ -1,5 +1,5 @@
-SPD 3.3 Enhanced - June 1, 1994
--------------------------------
+SPD 3.6 Enhanced - April 3, 1995
+--------------------------------
 
 by Alexander Enzmann, w/modifications and additions by Eric Haines
 
@@ -10,7 +10,7 @@ input format of the following renderers:
 
 	MTV (i.e. NFF)
 	POV-Ray 1.0
-	POV-Ray 2.0 [subject to change, though]
+	POV-Ray 2.0 to 2.2
 	Polyray 1.4 to 1.6
 	Vivid 2.0
 	QRT 1.5
@@ -19,20 +19,24 @@ input format of the following renderers:
 	Art 2.3 (from Vort)
 	RenderMan RIB
 	AutoCAD DXF [object data only]
+	Wavefront OBJ format (polygons only)
+	RenderWare RWX script file
 
 	In addition, there is a program nff2rad.c which converts NFF data to
 Radiance format (if anyone feels like folding this code into lib.c, please
 do).  Note that this converter is not listed in the makefile since it's
 special purpose (and standalone, so it's trivial to compile).
 
-	There is also an obj2nff.awk awk script which converts Wavefront OBJ
-files to NFF format.
-
 	A very rudimentary capability to dump polygons in the PLG format used
 by REND386 is also supported.  A very simple DXF reader has also been added.
 Its primary purpose was to display simple DXF files to the screen, but it has
 the side effect of being able to translate DXF files (only 3DFACE, though)
 to any of the above ray tracer file formats.
+
+	Similarly, a readobj program is provided which reads Wavefront OBJ
+files and converts to other formats.  This program is handy for reading all
+those free Viewpoint demo databases on avalon.chinalake.navy.mil and
+elsewhere.
 
 	Simple display drivers have been included various flavors for the IBM
 PC (VGA, Zortech, Gnu C, etc), Apple Macintosh, and Hewlett Packard Starbase.
@@ -97,9 +101,9 @@ for curved surfaces.  By default NFF is output, though this is easily changed
 by changing OUTPUT_RT_DEFAULT in the code.  Also, typing "prog -?" gives you
 the options available.
 
-The DXF displayer/converter "showdxf" works as follows:
+The DXF displayer/converter "readdxf" works as follows:
 
-    showdxf [-r renderer] filename
+    readdxf [-r renderer] filename
 
 "-r 0" means display on screen, the others convert, etc.  Two sample models,
 skull.dxf and f117.dxf, are provided as examples.  These were created with the
@@ -115,8 +119,9 @@ library code to output primitives in its native format.  The "sample.c" file
 has a simple scene, which can now be output in any supported format.  I have
 found this code to be very useful for generating frames for animations from
 "C" programs.  All you need to do is open a file for output, generate the
-database, and then use a "system" call to perform the render.  There are two
-other sample procedural model generation files, "lattice.c" and "shells.c".
+database, and then use a "system" call to perform the render.  There are three
+other sample procedural model generation files, "lattice.c", "shells.c", and
+"sombrero.c".
 
 In addition to the sphere, polygon, and cylinder/cone objects that were
 supported in the original SPD, support has been added for:  boxes, tori,
@@ -171,50 +176,4 @@ Post-it Notes
      require an FPU.  And for some of the larger runs, they may need 2 or
      3 mb of application heap space.  So they should run fine on LCs and
      powerbooks, given enough RAM and disk space!
-
-History
---------
-
-Sept. 6th release:
-  Antonio Costa [acc@asterix.inescn.pt]:
-   - Added support for IBM PC DJGPP (GNU C) with GRX graphics [drv_ibm.c]
-     and its makefile [makefile.dj] -- requires DJGPP graphic drivers
-     *.GRD or *.GRN -- allows high resolutions and is fast!
-   - Added EPSILON2 to defs.h because of precision problems (EPSILON is too
-     small) and changed lib.c to use EPSILON2.
-   - Added my own NFF generator: lattice -- creates a cubic lattice of
-     reflective spheres connected by matte cylinders (big CPU eater!)
-  Eric Haines [erich@eye.com]:
-   - Added shells.c, new procedural database generator (potential CPU eater)
-   - Added more PLATFORM_MULTITASK() calls.
-   - Added lib_open/lib_close calls (for easier maintenance and extension).
-
-Sept. 8th release:
-  Antonio Costa [acc@asterix.inescn.pt]:
-   - Corrected problem in lib_open/lib_close
-   - Corrected filenames for MAC version (*.out) of many generators
-   - Changed some things in shells.c (shells_get_opts and light source)
-
-Feb 10 1994 release:
-  Eduard Schwan [71513.2161@compuserve.com]:
-   - Added ReadNFF generator
-   - Renamed ShowDXF to ReadDXF, sounded more accurate (ReadOBJ in the works)
-   - Broke the giant lib.c file into several smaller libXXX.c files.  The
-     Mac Symantec compiler segments code on a per-file basis & lib.c was big
-     enough to force an unwanted large-model compile.
-   - Added a lib_output_comment routine in libprm.c, which lets you insert
-     general comment strings into the data stream in the appropriate dialect.
-
-June 1 1994 SPD 3.3f2 release:
-   - Added RIB file output
-   - Added DXF file output
-   - Split lib_get_opts to generator and reader specific command line
-     interpreters.
-   - More breakup of the lib*.c files to make Mac happy.
-
-August 7 1994 SPD 3.3f4 release:
-   - Fixed bug in Teapot that stomped the dialog display.
-   - Changed code to use standard system palette for screen display, so that
-      it no longer goofs up Finder colors upon exit
-   - Fixed "In Progress" dialog to refresh if switched out and back in.
 

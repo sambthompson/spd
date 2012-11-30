@@ -5,7 +5,7 @@ CC	=ztc
 #CFLAGS	=-mx
 CFLAGS	=-ml -f
 OBJ	= obj
-SPDOBJS	= drv_zrtc.$(OBJ) libini$(OBJ) libinf$(OBJ) libpr1$(OBJ) libpr2$(OBJ) libpr3$(OBJ) libply$(OBJ) libdmp$(OBJ) libvec$(OBJ) libvec.$(OBJ)
+SPDOBJS	= drv_zrtc.$(OBJ) libini.$(OBJ) libinf.$(OBJ) libpr1.$(OBJ) libpr2.$(OBJ) libpr3.$(OBJ) libply.$(OBJ) libdmp.$(OBJ) libvec.$(OBJ) libtx.$(OBJ)
 
 # Zortech specific graphics library
 LIBFILES=fg.lib
@@ -32,6 +32,8 @@ libply.$(OBJ): libply.c lib.h libvec.h drv.h
 libdmp.$(OBJ): libdmp.c lib.h libvec.h drv.h
 
 libvec.$(OBJ): libvec.c libvec.h
+
+libtx.$(OBJ): libtx.c lib.h libvec.h drv.h
 
 balls.exe: balls.$(OBJ) $(SPDOBJS)
    $(CC) $(CFLAGS) balls.$(OBJ) $(SPDOBJS) $(LIBFILES)
@@ -68,3 +70,6 @@ lattice.exe: lattice.$(OBJ) $(SPDOBJS)
 
 shells.exe: shells.$(OBJ) $(SPDOBJS)
    $(CC) $(CFLAGS) shells.$(OBJ) $(SPDOBJS) $(LIBFILES)
+
+jacks.exe: jacks.$(OBJ) $(SPDOBJS)
+   $(CC) $(CFLAGS) jacks.$(OBJ) $(SPDOBJS) $(LIBFILES)

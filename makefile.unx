@@ -5,11 +5,13 @@ CC=cc -O
 SUFOBJ=.o
 SUFEXE=.exe
 INC=def.h lib.h
-LIBOBJ=drv_unix$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) libvec$(SUFOBJ)
+LIBOBJ=drv_unix$(SUFOBJ) libini$(SUFOBJ) libinf$(SUFOBJ) libpr1$(SUFOBJ) \
+	libpr2$(SUFOBJ) libpr3$(SUFOBJ) libply$(SUFOBJ) libdmp$(SUFOBJ) \
+	libvec$(SUFOBJ) libtx$(SUFOBJ)
 BASELIB=-lm
 
 all:		balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells
+		sample lattice shells jacks
 
 drv_unix$(SUFOBJ):	$(INC) drv_unix.c drv.h
 		$(CC) -c drv_unix.c
@@ -37,6 +39,9 @@ libdmp$(SUFOBJ):	$(INC) libdmp.c
 
 libvec$(SUFOBJ):	$(INC) libvec.c
 		$(CC) -c libvec.c
+
+libtx$(SUFOBJ):		$(INC) libtx.c
+		$(CC) -c libtx.c
 
 balls$(EXE):		$(LIBOBJ) balls.c
 		$(CC) -o balls$(EXE) balls.c $(LIBOBJ) $(BASELIB)
@@ -74,7 +79,10 @@ lattice$(EXE):		$(LIBOBJ) lattice.c
 shells$(EXE):		$(LIBOBJ) shells.c
 		$(CC) -o shells$(EXE) shells.c $(LIBOBJ) $(BASELIB)
 
+jacks$(EXE):		$(LIBOBJ) jacks.c
+		$(CC) -o jacks$(EXE) jacks.c $(LIBOBJ) $(BASELIB)
+
 clean:
 	rm -f balls gears mount rings teapot tetra tree readdxf readnff \
-		sample lattice shells
+		sample lattice shells jacks
 	rm -f $(LIBOBJ)

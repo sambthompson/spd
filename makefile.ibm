@@ -8,9 +8,9 @@ EXE	= exe
 OBJ	= o
 
 # DOS version:
-#SPDOBJS	= drv_ibm.$(OBJ) libini$(OBJ) libinf$(OBJ) libpr1$(OBJ) libpr2$(OBJ) libpr3$(OBJ) libply$(OBJ) libdmp$(OBJ) libvec$(OBJ) libvec.$(OBJ)
+#SPDOBJS	= drv_ibm.$(OBJ) libini.$(OBJ) libinf.$(OBJ) libpr1.$(OBJ) libpr2.$(OBJ) libpr3.$(OBJ) libply.$(OBJ) libdmp.$(OBJ) libvec.$(OBJ) libtx.$(OBJ)
 # other versions...
-SPDOBJS	= libini$(OBJ) libinf$(OBJ) libpr1$(OBJ) libpr2$(OBJ) libpr3$(OBJ) libply$(OBJ) libdmp$(OBJ) libvec$(OBJ) libvec.$(OBJ)
+SPDOBJS	= libini.$(OBJ) libinf.$(OBJ) libpr1.$(OBJ) libpr2.$(OBJ) libpr3.$(OBJ) libply.$(OBJ) libdmp.$(OBJ) libvec.$(OBJ) libtx.$(OBJ)
 
 # Zortech specific graphics library
 #LIBFILES=fg.lib
@@ -19,7 +19,7 @@ LIBFILES=-lm
 
 all:	balls.$(EXE) gears.$(EXE) mount.$(EXE) rings.$(EXE) teapot.$(EXE) \
 	tetra.$(EXE) tree.$(EXE) \
-	sample.$(EXE) lattice.$(EXE) shells.$(EXE)
+	sample.$(EXE) lattice.$(EXE) shells.$(EXE) jacks.$(EXE)
 
 # Rule to compile c progs into obj's
 .c.$(OBJ):
@@ -43,6 +43,8 @@ libply.$(OBJ): libply.c lib.h libvec.h drv.h
 libdmp.$(OBJ): libdmp.c lib.h libvec.h drv.h
 
 libvec.$(OBJ):	libvec.c libvec.h
+
+libtx.$(OBJ): libtx.c lib.h libvec.h drv.h
 
 balls.$(EXE):	balls.$(OBJ) $(SPDOBJS)
 	$(CC) $(CFLAGS) balls.$(OBJ) $(SPDOBJS) $(LIBFILES)
@@ -79,3 +81,6 @@ lattice.$(EXE):	lattice.$(OBJ) $(SPDOBJS)
 
 shells.$(EXE):	shells.$(OBJ) $(SPDOBJS)
 	$(CC) $(CFLAGS) shells.$(OBJ) $(SPDOBJS) $(LIBFILES)
+
+jacks.$(EXE):	jacks.$(OBJ) $(SPDOBJS)
+	$(CC) $(CFLAGS) jacks.$(OBJ) $(SPDOBJS) $(LIBFILES)

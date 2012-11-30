@@ -74,10 +74,10 @@ display_line(x0, y0, x1, y1, color)
 {
     /* Insert line drawing code here */
     line_color( FD, ClrList( color ) ) ;
-    move2d( FD, (float)(((double)x0+X_res*0.5)/X_res),
-	    (float)(((double)y0+Y_res*0.5)/Y_res) ) ;
-    draw2d( FD, (float)(((double)x1+X_res*0.5)/X_res),
-	    (float)(((double)y1+Y_res*0.5)/Y_res) ) ;
+    move2d( FD, (float)(((double)x0)/X_res),
+	    (float)(((double)-y0+Y_res)/Y_res) ) ;
+    draw2d( FD, (float)(((double)x1)/X_res),
+	    (float)(((double)-y1+Y_res)/Y_res) ) ;
 }
 
 int

@@ -3,6 +3,10 @@
  *
  * Author:  Alexander Enzmann
  *
+ * Modified: 1 November 1994
+ *           Alexander R. Enzmann
+ *           Changes necessary for transformations
+ *           Fixed vertex ordering in lib_output_cylcone
  */
 
 
@@ -27,6 +31,11 @@
 /* Polygon stack for making PLG files */
 object_ptr gPolygon_stack = NULL;
 
+/* Keep track of how many vertices/faces have been emitted */
+unsigned long gVertex_count = 0; /* Vertex coordinates */
+unsigned long gNormal_count = 0; /* Vertex normals */
+unsigned long gFace_count = 0;
+
 /* Storage for polygon indices */
 unsigned int *gPoly_vbuffer = NULL;
 int *gPoly_end = NULL;
@@ -44,7 +53,7 @@ lib_output_polygon_cylcone(base_pt, apex_pt)
     double angle, delta_angle, divisor;
     COORD3 axis, dir, norm_axis, start_norm;
     COORD3 norm[4], vert[4], start_radius[4];
-    MATRIX mx;
+    MATRIX nmx, mx;
     int    i;
 
     SUB3_COORD3(axis, apex_pt, base_pt);
@@ -64,31 +73,32 @@ lib_output_polygon_cylcone(base_pt, apex_pt)
     start_radius[0][X] = start_norm[X] * base_pt[W];
     start_radius[0][Y] = start_norm[Y] * base_pt[W];
     start_radius[0][Z] = start_norm[Z] * base_pt[W];
-    ADD3_COORD3(vert[0], base_pt, start_radius[0]);
+    ADD3_COORD3(vert[2], base_pt, start_radius[0]);
 
     start_radius[1][X] = start_norm[X] * apex_pt[W];
     start_radius[1][Y] = start_norm[Y] * apex_pt[W];
     start_radius[1][Z] = start_norm[Z] * apex_pt[W];
     ADD3_COORD3(vert[1], apex_pt, start_radius[1]);
 
-    COPY_COORD3(norm[0], start_norm);
+    COPY_COORD3(norm[2], start_norm);
     COPY_COORD3(norm[1], start_norm);
 
     delta_angle = 2.0 * PI / (double)(2*gU_resolution);
     for (i=1,angle=delta_angle;i<=2*gU_resolution;++i,angle+=delta_angle) {
 	lib_create_axis_rotate_matrix(mx, norm_axis, angle);
-	lib_transform_vector(vert[2], start_radius[1], mx);
-	ADD2_COORD3(vert[2], apex_pt);
-	lib_transform_vector(norm[2], start_norm, mx);
+	lib_invert_matrix(nmx, mx);
+	lib_transform_point(vert[0], start_radius[1], mx);
+	ADD2_COORD3(vert[0], apex_pt);
+	lib_transform_normal(norm[0], start_norm, nmx);
 	lib_output_polypatch(3, vert, norm);
-	COPY_COORD3(vert[1], vert[2]);
-	COPY_COORD3(norm[1], norm[2]);
-	lib_transform_vector(vert[2], start_radius[0], mx);
-	ADD2_COORD3(vert[2], base_pt);
+	COPY_COORD3(vert[1], vert[0]);
+	COPY_COORD3(norm[1], norm[0]);
+	lib_transform_point(vert[0], start_radius[0], mx);
+	ADD2_COORD3(vert[0], base_pt);
 	lib_output_polypatch(3, vert, norm);
 
-	COPY_COORD3(vert[0], vert[2]);
-	COPY_COORD3(norm[0], norm[2]);
+	COPY_COORD3(vert[2], vert[0]);
+	COPY_COORD3(norm[2], norm[0]);
 
 	PLATFORM_MULTITASK();
     }
@@ -105,7 +115,7 @@ disc_evaluator(trans, theta, v, r, vert)
 
     /* Compute the position of the point */
     SET_COORD3(tvert, (r + v) * cos(theta), (r + v) * sin(theta), 0.0);
-    lib_transform_vector(vert, tvert, trans);
+    lib_transform_point(vert, tvert, trans);
 }
 
 /*-----------------------------------------------------------------*/
@@ -132,13 +142,11 @@ lib_output_polygon_disc(center, normal, iradius, oradius)
     for (i=0,u=0.0;i<4*gU_resolution;i++,u+=delta_u) {
 	PLATFORM_MULTITASK();
 	for (j=0,v=0.0;j<gV_resolution;j++,v+=delta_v) {
-	    disc_evaluator(imx, u, v, iradius, vert[0]);
-	    disc_evaluator(imx, u+delta_u, v, iradius, vert[1]);
-	    disc_evaluator(imx, u+delta_u, v+delta_v, iradius, vert[2]);
-	    lib_output_polygon(3, vert);
-	    COPY_COORD3(vert[1], vert[2]);
-	    disc_evaluator(imx, u, v+delta_v, iradius, vert[2]);
-	    lib_output_polygon(3, vert);
+	    disc_evaluator(imx, u, v, iradius, vert[3]);
+	    disc_evaluator(imx, u+delta_u, v, iradius, vert[2]);
+	    disc_evaluator(imx, u+delta_u, v+delta_v, iradius, vert[1]);
+	    disc_evaluator(imx, u, v+delta_v, iradius, vert[0]);
+	    lib_output_polygon(4, vert);
 	}
     }
 }
@@ -223,13 +231,13 @@ lib_output_polygon_sphere(center_pt)
 			COPY_COORD3(edge_norm[num_edge], edge_pt[num_edge]);
 			edge_pt[num_edge][X] =
 				edge_pt[num_edge][X] * center_pt[W] +
-					       center_pt[X];
+				               center_pt[X];
 			edge_pt[num_edge][Y] =
 				edge_pt[num_edge][Y] * center_pt[W] +
-					       center_pt[Y];
+				               center_pt[Y];
 			edge_pt[num_edge][Z] =
 				edge_pt[num_edge][Z] * center_pt[W] +
-					       center_pt[Z];
+				               center_pt[Z];
 
 		    }
 		    lib_output_polypatch(3, edge_pt, edge_norm);
@@ -250,11 +258,11 @@ lib_output_polygon_sphere(center_pt)
 /*-----------------------------------------------------------------*/
 void
 lib_output_polygon_height(height, width, data, x0, x1, y0, y1, z0, z1)
-    unsigned int height, width;
+    int height, width;
     float **data;
     double x0, x1, y0, y1, z0, z1;
 {
-    unsigned int i, j;
+    int i, j;
     double xdelta, zdelta;
     COORD3 verts[3];
 
@@ -331,16 +339,16 @@ lib_output_polygon_torus(center, normal, iradius, oradius)
     for (i=0,u=0.0;i<gU_resolution;i++,u+=delta_u) {
 	PLATFORM_MULTITASK();
 	for (j=0,v=0.0;j<gV_resolution;j++,v+=delta_v) {
-	    torus_evaluator(imx, u, v, iradius, oradius, vert[0], norm[0]);
+	    torus_evaluator(imx, u, v, iradius, oradius, vert[2], norm[2]);
 	    torus_evaluator(imx, u, v+delta_v, iradius, oradius,
 			vert[1], norm[1]);
 	    torus_evaluator(imx, u+delta_u, v+delta_v,
-			iradius, oradius, vert[2], norm[2]);
+			iradius, oradius, vert[0], norm[0]);
 	    lib_output_polypatch(3, vert, norm);
-	    COPY_COORD3(vert[1], vert[2]);
-	    COPY_COORD3(norm[1], norm[2]);
+	    COPY_COORD3(vert[1], vert[0]);
+	    COPY_COORD3(norm[1], norm[0]);
 	    torus_evaluator(imx, u+delta_u, v, iradius, oradius,
-			vert[2], norm[2]);
+			vert[0], norm[0]);
 	    lib_output_polypatch(3, vert, norm);
 	}
     }
@@ -355,38 +363,38 @@ lib_output_polygon_box(p1, p2)
 
     /* Sides */
     SET_COORD3(box_verts[0], p1[X], p1[Y], p1[Z]);
-    SET_COORD3(box_verts[1], p1[X], p2[Y], p1[Z]);
+    SET_COORD3(box_verts[1], p1[X], p1[Y], p2[Z]);
     SET_COORD3(box_verts[2], p1[X], p2[Y], p2[Z]);
-    SET_COORD3(box_verts[3], p1[X], p1[Y], p2[Z]);
+    SET_COORD3(box_verts[3], p1[X], p2[Y], p1[Z]);
     lib_output_polygon(4, box_verts);
-    SET_COORD3(box_verts[3], p2[X], p1[Y], p1[Z]);
-    SET_COORD3(box_verts[2], p2[X], p2[Y], p1[Z]);
-    SET_COORD3(box_verts[1], p2[X], p2[Y], p2[Z]);
     SET_COORD3(box_verts[0], p2[X], p1[Y], p2[Z]);
+    SET_COORD3(box_verts[1], p2[X], p1[Y], p1[Z]);
+    SET_COORD3(box_verts[2], p2[X], p2[Y], p1[Z]);
+    SET_COORD3(box_verts[3], p2[X], p2[Y], p2[Z]);
     lib_output_polygon(4, box_verts);
 
     /* Front/Back */
     SET_COORD3(box_verts[0], p1[X], p1[Y], p1[Z]);
-    SET_COORD3(box_verts[1], p1[X], p2[Y], p1[Z]);
-    SET_COORD3(box_verts[2], p2[X], p2[Y], p1[Z]);
     SET_COORD3(box_verts[3], p2[X], p1[Y], p1[Z]);
+    SET_COORD3(box_verts[2], p2[X], p2[Y], p1[Z]);
+    SET_COORD3(box_verts[1], p1[X], p2[Y], p1[Z]);
     lib_output_polygon(4, box_verts);
+    SET_COORD3(box_verts[0], p2[X], p1[Y], p2[Z]);
     SET_COORD3(box_verts[3], p1[X], p1[Y], p2[Z]);
     SET_COORD3(box_verts[2], p1[X], p2[Y], p2[Z]);
     SET_COORD3(box_verts[1], p2[X], p2[Y], p2[Z]);
-    SET_COORD3(box_verts[0], p2[X], p1[Y], p2[Z]);
     lib_output_polygon(4, box_verts);
 
     /* Top/Bottom */
     SET_COORD3(box_verts[0], p1[X], p1[Y], p1[Z]);
-    SET_COORD3(box_verts[1], p1[X], p1[Y], p2[Z]);
+    SET_COORD3(box_verts[3], p1[X], p1[Y], p2[Z]);
     SET_COORD3(box_verts[2], p2[X], p1[Y], p2[Z]);
-    SET_COORD3(box_verts[3], p2[X], p1[Y], p1[Z]);
+    SET_COORD3(box_verts[1], p2[X], p1[Y], p1[Z]);
     lib_output_polygon(4, box_verts);
-    SET_COORD3(box_verts[3], p1[X], p2[Y], p1[Z]);
-    SET_COORD3(box_verts[2], p1[X], p2[Y], p2[Z]);
-    SET_COORD3(box_verts[1], p2[X], p2[Y], p2[Z]);
     SET_COORD3(box_verts[0], p2[X], p2[Y], p1[Z]);
+    SET_COORD3(box_verts[3], p2[X], p2[Y], p2[Z]);
+    SET_COORD3(box_verts[2], p1[X], p2[Y], p2[Z]);
+    SET_COORD3(box_verts[1], p1[X], p2[Y], p1[Z]);
     lib_output_polygon(4, box_verts);
 }
 
@@ -429,12 +437,12 @@ find_axes(verts)
 
 /*-----------------------------------------------------------------*/
 /* Find the left most vertex in the polygon that has vertices m ... n. */
-static unsigned int
+static int
 leftmost_vertex(m, n, verts)
-    unsigned int m, n;
+    int m, n;
     COORD3 *verts;
 {
-    unsigned int l, i;
+    int l, i;
     double x;
 
     /* Assume the first vertex is the farthest to the left */
@@ -454,12 +462,12 @@ leftmost_vertex(m, n, verts)
 /*-----------------------------------------------------------------*/
 /* Given the leftmost vertex in a polygon, this routine finds another vertex
    can be used to safely split the polygon. */
-static unsigned int
+static int
 split_vertex(l, la, lb, m, n, verts)
-    unsigned int l, la, lb, m, n;
+    int l, la, lb, m, n;
     COORD3 *verts;
 {
-    unsigned int t, k, lpu, lpl;
+    int t, k, lpu, lpl;
     double yu, yl;
 
     yu = MAX(VERT(l, gPoly_Axis2), MAX(VERT(la, gPoly_Axis2), VERT(lb, gPoly_Axis2)));
@@ -497,7 +505,7 @@ split_vertex(l, la, lb, m, n, verts)
 /* Test polygon vertices to see if they are linear */
 static int
 linear_vertices(m, n, verts)
-    unsigned int m, n;
+    int m, n;
     COORD3 *verts;
 {
 #if defined (applec)
@@ -536,7 +544,7 @@ perform_split(m, m1, n, n1)
 /* Copy an indirectly referenced triangle into the output triangle buffer */
 static void
 add_new_triangle(m, verts, norms, out_cnt, out_verts, out_norms)
-    unsigned int m, *out_cnt;
+    int m, *out_cnt;
     COORD3 *verts, *norms, **out_verts, **out_norms;
 {
     if (out_verts != NULL) {
@@ -555,11 +563,11 @@ add_new_triangle(m, verts, norms, out_cnt, out_verts, out_norms)
 /*-----------------------------------------------------------------*/
 static void
 split_buffered_polygon(cnt, verts, norms, out_cnt, out_verts, out_norms)
-    unsigned int cnt, *out_cnt;
+    int cnt, *out_cnt;
     COORD3 *verts, *norms, **out_verts, **out_norms;
 {
-    unsigned int i, m, m1, n, n1;
-    unsigned int l, la, lb, ls;
+    int i, m, m1, n, n1;
+    int l, la, lb, ls;
 
     /* No triangles to start with */
     *out_cnt = 0;
@@ -603,13 +611,14 @@ split_buffered_polygon(cnt, verts, norms, out_cnt, out_verts, out_norms)
  */
 static void
 split_polygon(n, vert, norm)
-    unsigned int n;
+    int n;
     COORD3 *vert, *norm;
 {
     COORD4 tvert[3], v0, v1;
     COORD3 **out_verts, **out_norms;
+    MATRIX nmx, txmat;
     int i, ii, j ;
-    unsigned int t, out_n;
+    int t, out_n;
     object_ptr new_object;
 
     /* Can't split a NULL vertex list */
@@ -641,13 +650,28 @@ split_polygon(n, vert, norm)
     out_n = 0;
     split_buffered_polygon(n, vert, norm, &out_n, out_verts, out_norms);
 
+   if (lib_tx_active()) {
+      /* Perform transformations of the vertices and normals of
+	 the polygon(s) */
+      lib_get_current_tx(txmat);
+      lib_invert_matrix(nmx, txmat);
+      for (t=0;t<out_n;t++)
+	 for (i=0;i<3;i++) {
+	    lib_transform_point(out_verts[t][i], out_verts[t][i], txmat);
+	    if (out_norms != NULL)
+	       lib_transform_normal(out_norms[t][i], out_norms[t][i], nmx);
+	    }
+      }
+
     /* Now output the triangles that we generated */
     for (t=0;t<out_n;t++) {
 	PLATFORM_MULTITASK();
-	if (gRT_out_format == OUTPUT_DELAYED || gRT_out_format == OUTPUT_PLG) {
+	if (gRT_out_format == OUTPUT_DELAYED ||
+	    gRT_out_format == OUTPUT_PLG) {
 	    /* Save all the pertinent information */
 	    new_object = (object_ptr)malloc(sizeof(struct object_struct));
 	    if (new_object == NULL) return;
+	    new_object->tx = NULL;
 	    if (norm == NULL) {
 		new_object->object_type  = POLYGON_OBJ;
 		new_object->object_data.polygon.tot_vert = 3;
@@ -677,8 +701,18 @@ split_polygon(n, vert, norm)
 			    out_norms[t][i])
 		}
 	    }
-	    new_object->next_object = gLib_objects;
-	    gLib_objects = new_object;
+	   if (gRT_out_format == OUTPUT_PLG) {
+	       /* We are currently in the process of turning objects
+		  into a stack of polygons.  Since we don't want to
+		  put these polygons back onto the original stack of
+		  objects, we put them into gPolygon_stack */
+	       new_object->next_object = gPolygon_stack;
+	       gPolygon_stack = new_object;
+	    }
+	   else {
+	       new_object->next_object = gLib_objects;
+	       gLib_objects = new_object;
+	   }
 	} else {
 	    switch (gRT_out_format) {
 		case OUTPUT_VIDEO:
@@ -687,8 +721,8 @@ split_polygon(n, vert, norm)
 		     */
 		    if (!gView_init_flag) {
 			lib_create_view_matrix(gViewpoint.tx, gViewpoint.from, gViewpoint.at,
-					       gViewpoint.up, gViewpoint.resx, gViewpoint.resy,
-					       gViewpoint.angle, gViewpoint.aspect);
+				               gViewpoint.up, gViewpoint.resx, gViewpoint.resy,
+				               gViewpoint.angle, gViewpoint.aspect);
 			display_init(gViewpoint.resx, gViewpoint.resy, gBkgnd_color);
 			gView_init_flag = 1;
 		    }
@@ -706,7 +740,7 @@ split_polygon(n, vert, norm)
 			v1[X] /= v1[W]; v1[Y] /= v1[W];
 			if (lib_clip_to_box(v0, v1, gView_bounds))
 			    display_line((int)v0[X], (int)v0[Y],
-					(int)v1[X], (int)v1[Y], gFgnd_color);
+				        (int)v1[X], (int)v1[Y], gFgnd_color);
 		    }
 		    break;
 
@@ -801,10 +835,11 @@ split_polygon(n, vert, norm)
 			tab_indent();
 			fprintf(gOutfile, "object { patch ");
 			for (i=0;i<3;i++) {
+			    j = (i == 0 ? 0 : (i == 1 ? 2 : 1));
 			    fprintf(gOutfile, " <%g, %g, %g>, <%g, %g, %g>",
-				    out_verts[t][i][X], out_verts[t][i][Y],
-				    out_verts[t][i][Z], out_norms[t][i][X],
-				    out_verts[t][i][Y], out_norms[t][i][Z]);
+				    out_verts[t][j][X], out_verts[t][j][Y],
+				    out_verts[t][j][Z], out_norms[t][j][X],
+				    out_verts[t][j][Y], out_norms[t][j][Z]);
 			    if (i < 2)
 				fprintf(gOutfile, ", ");
 			}
@@ -940,6 +975,58 @@ split_polygon(n, vert, norm)
 		    fprintf(gOutfile, "\n");
 		    break;
 
+		case OUTPUT_OBJ:
+		    /* First the vertices */
+		    for (i=0;i<3;++i)
+		       fprintf(gOutfile, "v %g %g %g\n",
+				out_verts[t][i][X], out_verts[t][i][Y],
+				out_verts[t][i][Z]);
+		    if (norm != NULL)
+			for (i=0;i<3;++i)
+			    fprintf(gOutfile, "vn %g %g %g\n",
+				    out_norms[t][i][X], out_norms[t][i][Y],
+				    out_norms[t][i][Z]);
+		    /* Then the face - note that we add one to the count
+		       since Wavefront vertices start at 1, not 0. */
+		    if (norm == NULL) {
+		       fprintf(gOutfile, "f %d %d %d\n",
+			       gVertex_count+1, gVertex_count+2,
+			       gVertex_count+3);
+		       gVertex_count += 3;
+		       }
+		    else {
+		       fprintf(gOutfile, "f %d//%d %d//%d %d//%d\n",
+			       gVertex_count+1, gNormal_count+1,
+			       gVertex_count+2, gNormal_count+2,
+			       gVertex_count+3, gNormal_count+3);
+		       gVertex_count += 3;
+		       gNormal_count += 3;
+		       }
+		    break;
+
+		case OUTPUT_RWX:
+		    /* First the vertices */
+		    for (i=0;i<3;++i) {
+		       tab_indent();
+		       fprintf(gOutfile, "Vertex %g %g %g",
+				out_verts[t][i][X], out_verts[t][i][Y],
+				out_verts[t][i][Z]);
+		       if (norm != NULL)
+			   fprintf(gOutfile, " Normal %g %g %g\n",
+				   out_norms[t][i][X], out_norms[t][i][Y],
+				   out_norms[t][i][Z]);
+		       else
+			  fprintf(gOutfile, "\n");
+		       }
+
+		    /* Then the face */
+		    tab_indent();
+		    fprintf(gOutfile, "Triangle %ld %ld %ld\n",
+			    gVertex_count+1, gVertex_count+2,
+			    gVertex_count+3);
+		    gVertex_count += 3;
+		    break;
+
 		case OUTPUT_RIB:
 		    /* The order of the vertices has to be inverted for the
 		       LH system */
@@ -1021,6 +1108,7 @@ lib_output_polygon(tot_vert, vert)
     int num_vert, i, j;
     COORD3 x;
     COORD4 tvert[3], v0, v1;
+    MATRIX txmat;
 
     /* First lets do a couple of checks to see if this is a valid polygon */
     for (i=0;i<tot_vert;) {
@@ -1041,6 +1129,14 @@ lib_output_polygon(tot_vert, vert)
 	/* No such thing as a poly that only has two sides */
 	return;
 
+    if (lib_tx_active()) {
+	/* Perform transformations of the vertices and normals of
+	   the polygon(s) */
+	lib_get_current_tx(txmat);
+	for (i=0;i<tot_vert;i++)
+	    lib_transform_point(vert[i], vert[i], txmat);
+    }
+
     if (gRT_out_format == OUTPUT_DELAYED) {
 	/* Save all the pertinent information */
 	new_object = (object_ptr)malloc(sizeof(struct object_struct));
@@ -1053,6 +1149,7 @@ lib_output_polygon(tot_vert, vert)
 	new_object->curve_format = OUTPUT_PATCHES;
 	new_object->surf_index   = gTexture_count;
 	new_object->object_data.polygon.tot_vert = tot_vert;
+	new_object->tx = NULL;
 	for (i=0;i<tot_vert;i++)
 	    COPY_COORD3(new_object->object_data.polygon.vert[i], vert[i])
 	new_object->next_object = gLib_objects;
@@ -1063,8 +1160,8 @@ lib_output_polygon(tot_vert, vert)
 		/* First make sure the display has been opened for drawing */
 		if (!gView_init_flag) {
 		    lib_create_view_matrix(gViewpoint.tx, gViewpoint.from, gViewpoint.at,
-					   gViewpoint.up, gViewpoint.resx, gViewpoint.resy,
-					   gViewpoint.angle, gViewpoint.aspect);
+				           gViewpoint.up, gViewpoint.resx, gViewpoint.resy,
+				           gViewpoint.angle, gViewpoint.aspect);
 		    display_init(gViewpoint.resx, gViewpoint.resy, gBkgnd_color);
 		    gView_init_flag = 1;
 		}
@@ -1095,6 +1192,47 @@ lib_output_polygon(tot_vert, vert)
 			    vert[num_vert][Z]);
 		break;
 
+	    case OUTPUT_OBJ:
+		/* First the vertices */
+		for (num_vert=0;num_vert<tot_vert;++num_vert)
+		    fprintf(gOutfile, "v %g %g %g\n",
+			    vert[num_vert][X],
+			    vert[num_vert][Y],
+			    vert[num_vert][Z]);
+		/* Then the face - note that we add one to the count
+		   since Wavefront vertices start at 1, not 0. */
+		fprintf(gOutfile, "f ");
+		for (num_vert=0;num_vert<tot_vert;num_vert++) {
+		   fprintf(gOutfile, "%d", gVertex_count+num_vert+1);
+		   if (num_vert < tot_vert - 1)
+		      fprintf(gOutfile, " ");
+		   }
+		fprintf(gOutfile, "\n");
+		gVertex_count += tot_vert;
+		break;
+
+	    case OUTPUT_RWX:
+		/* First the vertices */
+		for (num_vert=0;num_vert<tot_vert;++num_vert) {
+		   tab_indent();
+		   fprintf(gOutfile, "Vertex %g %g %g\n",
+			   vert[num_vert][X],
+			   vert[num_vert][Y],
+			   vert[num_vert][Z]);
+		   }
+		/* Then the face - note that we add one to the count
+		   since RenderWare vertices start at 1, not 0. */
+		tab_indent();
+		fprintf(gOutfile, "Polygon %d ", num_vert);
+		for (num_vert=0;num_vert<tot_vert;num_vert++) {
+		   fprintf(gOutfile, "%ld", (long)(gVertex_count+num_vert+1));
+		   if (num_vert < tot_vert - 1)
+		      fprintf(gOutfile, " ");
+		   }
+		fprintf(gOutfile, "\n");
+		gVertex_count += tot_vert;
+		break;
+
 	    case OUTPUT_POVRAY_10:
 	    case OUTPUT_POVRAY_20:
 	    case OUTPUT_QRT:
@@ -1105,7 +1243,7 @@ lib_output_polygon(tot_vert, vert)
 		These renderers don't do arbitrary polygons, split the polygon
 		into triangles for output
 		*/
-		split_polygon(tot_vert, vert, NULL);
+		split_polygon(tot_vert, vert, (COORD3 *)NULL);
 		break;
 
 	    case OUTPUT_POLYRAY:

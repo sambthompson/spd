@@ -45,8 +45,10 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
     COORD4 base_pt, apex_pt;
     int curve_format;
 {
+    MATRIX txmat;
+    double trans[16];
     object_ptr new_object;
-    COORD4  axis;
+    COORD4  axis, tempv;
     double  len, cottheta, xang, yang, height;
 
     if (gRT_out_format == OUTPUT_DELAYED) {
@@ -58,6 +60,16 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 	new_object->object_type  = CONE_OBJ;
 	new_object->curve_format = curve_format;
 	new_object->surf_index   = gTexture_count;
+	if (lib_tx_active()) {
+	    lib_get_current_tx(txmat);
+	    new_object->tx = malloc(sizeof(MATRIX));
+	    if (new_object->tx == NULL)
+	       return;
+	    else
+	       memcpy(new_object->tx, txmat, sizeof(MATRIX));
+	    }
+	else
+	   new_object->tx = NULL;
 	COPY_COORD4(new_object->object_data.cone.apex_pt, apex_pt);
 	COPY_COORD4(new_object->object_data.cone.base_pt, base_pt);
 	new_object->next_object = gLib_objects;
@@ -67,12 +79,26 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 	switch (gRT_out_format) {
 	    case OUTPUT_VIDEO:
 	    case OUTPUT_PLG:
+	    case OUTPUT_OBJ:
+	    case OUTPUT_RWX:
 		lib_output_polygon_cylcone(base_pt, apex_pt);
 		break;
 
 	    case OUTPUT_NFF:
-		fprintf(gOutfile, "c\n" ) ;
-		fprintf(gOutfile, "%g %g %g %g\n",
+		if (lib_tx_active()) {
+		    lib_get_current_tx(txmat);
+		    lib_tx_unwind(txmat, trans);
+		    /* Transform the cone by modifying it's endpoints.  This
+		       assumes uniform scaling. */
+		    lib_transform_point(tempv, base_pt, txmat);
+		    COPY_COORD3(base_pt, tempv)
+		    base_pt[W] *= fabs(trans[U_SCALEX]);
+		    lib_transform_point(tempv, apex_pt, txmat);
+		    COPY_COORD3(apex_pt, tempv)
+		    apex_pt[W] *= fabs(trans[U_SCALEX]);
+		    }
+		fprintf(gOutfile, "c " ) ;
+		fprintf(gOutfile, "%g %g %g %g ",
 			base_pt[X], base_pt[Y], base_pt[Z], base_pt[W]);
 		fprintf(gOutfile, "%g %g %g %g\n",
 			apex_pt[X], apex_pt[Y], apex_pt[Z], apex_pt[W]);
@@ -183,6 +209,8 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		tab_indent();
 		fprintf(gOutfile, "translate <%g %g %g>\n",
 			base_pt[X], base_pt[Y], base_pt[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL) {
 		   tab_indent();
 		   fprintf(gOutfile, "texture { %s }\n", gTexture_name);
@@ -206,6 +234,8 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		tab_indent();
 		fprintf(gOutfile, "<%g, %g, %g>, %g open\n",
 			base_pt[X], base_pt[Y], base_pt[Z], base_pt[W]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL) {
 		   tab_indent();
 		   fprintf(gOutfile, "texture { %s }\n", gTexture_name);
@@ -219,31 +249,32 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 
 	    case OUTPUT_POLYRAY:
 		tab_indent();
-		fprintf(gOutfile, "object {");
-		tab_inc();
-
-		tab_indent();
+		fprintf(gOutfile, "object { ");
 		if (base_pt[W] == apex_pt[W])
-		   fprintf(gOutfile, "cylinder <%g, %g, %g>, <%g, %g, %g>, %g",
+		   fprintf(gOutfile, "cylinder <%g, %g, %g>, <%g, %g, %g>, %g ",
 			  base_pt[X], base_pt[Y], base_pt[Z],
 			  apex_pt[X], apex_pt[Y], apex_pt[Z], apex_pt[W]);
 		else
-		   fprintf(gOutfile, "cone <%g, %g, %g>, %g, <%g, %g, %g>, %g",
+		   fprintf(gOutfile, "cone <%g, %g, %g>, %g, <%g, %g, %g>, %g ",
 			  base_pt[X], base_pt[Y], base_pt[Z], base_pt[W],
 			  apex_pt[X], apex_pt[Y], apex_pt[Z], apex_pt[W]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		   fprintf(gOutfile, " %s", gTexture_name);
-		fprintf(gOutfile, "\n");
-
-		tab_dec();
-		tab_indent();
-		fprintf(gOutfile, "}\n");
-		fprintf(gOutfile, "\n");
+		fprintf(gOutfile, " }\n");
 		break;
 
 	    case OUTPUT_VIVID:
+		if (lib_tx_active()) {
+		   tab_indent();
+		   fprintf(gOutfile, "transform {\n");
+		   lib_output_tx_sequence();
+		   tab_indent();
+		   fprintf(gOutfile, "}\n");
+		   }
 		tab_indent();
-		fprintf(gOutfile, "cone {");
+		fprintf(gOutfile, "cone {\n");
 		tab_inc();
 
 		tab_indent();
@@ -256,7 +287,8 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		tab_dec();
 		tab_indent();
 		fprintf(gOutfile, "}\n");
-		fprintf(gOutfile, "\n");
+		if (lib_tx_active())
+		   fprintf(gOutfile, "transform_pop\n");
 		break;
 
 	    case OUTPUT_QRT:
@@ -269,12 +301,27 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		fprintf(gOutfile, "cone ");
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, "%s ", gTexture_name);
-		fprintf(gOutfile, " %g %g %g %g %g %g %g %g\n",
+		fprintf(gOutfile, " %g %g %g %g %g %g %g %g",
 			base_pt[W], base_pt[X], base_pt[Y], base_pt[Z],
 			apex_pt[W], apex_pt[X], apex_pt[Y], apex_pt[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
+		fprintf(gOutfile, "\n");
 		break;
 
 	    case OUTPUT_RTRACE:
+		if (lib_tx_active()) {
+		    lib_get_current_tx(txmat);
+		    lib_tx_unwind(txmat, trans);
+		    /* Transform the cone by modifying it's endpoints.  This
+		       assumes uniform scaling. */
+		    lib_transform_point(tempv, base_pt, txmat);
+		    COPY_COORD3(base_pt, tempv)
+		    base_pt[W] *= fabs(trans[U_SCALEX]);
+		    lib_transform_point(tempv, apex_pt, txmat);
+		    COPY_COORD3(apex_pt, tempv)
+		    apex_pt[W] *= fabs(trans[U_SCALEX]);
+		    }
 		fprintf(gOutfile, "4 %d %g %g %g %g %g %g %g %g %g\n",
 			gTexture_count, gTexture_ior,
 			base_pt[X], base_pt[Y], base_pt[Z], base_pt[W],
@@ -286,6 +333,8 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		    tab_indent();
 		    fprintf(gOutfile, "cone {\n");
 		    tab_inc();
+		    if (lib_tx_active())
+			lib_output_tx_sequence();
 		    tab_indent();
 		    fprintf(gOutfile, "radius %g  center(%g, %g, %g)\n",
 			    base_pt[W], base_pt[X], base_pt[Y], base_pt[Z]);
@@ -296,6 +345,8 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		    tab_indent();
 		    fprintf(gOutfile, "cylinder {\n");
 		    tab_inc();
+		    if (lib_tx_active())
+			lib_output_tx_sequence();
 		    tab_indent();
 		    fprintf(gOutfile, "radius %g  center(%g, %g, %g)\n",
 			    base_pt[W], base_pt[X], base_pt[Y], base_pt[Z]);
@@ -320,6 +371,8 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		tab_indent();
 		fprintf(gOutfile, "TransformBegin\n");
 		tab_inc();
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 
 		SUB3_COORD3(axis, apex_pt, base_pt);
 		height= len = lib_normalize_vector(axis);
@@ -361,6 +414,7 @@ lib_output_cylcone(base_pt, apex_pt, curve_format)
 		tab_indent();
 		fprintf(gOutfile, "TransformEnd\n");
 		break;
+
 	      }
     }
     else
@@ -375,9 +429,10 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
     double iradius, oradius;
     int curve_format;
 {
+    MATRIX txmat;
     object_ptr new_object;
     COORD4  axis, base, apex;
-    COORD3  axis_rib ;
+    COORD3  axis_rib;
     double  len, xang, yang;
 
     if (gRT_out_format == OUTPUT_DELAYED) {
@@ -389,6 +444,16 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
 	new_object->object_type  = DISC_OBJ;
 	new_object->curve_format = curve_format;
 	new_object->surf_index   = gTexture_count;
+	if (lib_tx_active()) {
+	    lib_get_current_tx(txmat);
+	    new_object->tx = malloc(sizeof(MATRIX));
+	    if (new_object->tx == NULL)
+	       return;
+	    else
+	       memcpy(new_object->tx, txmat, sizeof(MATRIX));
+	    }
+	else
+	   new_object->tx = NULL;
 	COPY_COORD4(new_object->object_data.disc.center, center);
 	COPY_COORD4(new_object->object_data.disc.normal, normal);
 	new_object->object_data.disc.iradius = iradius;
@@ -400,6 +465,8 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
 	    case OUTPUT_VIDEO:
 	    case OUTPUT_NFF:
 	    case OUTPUT_PLG:
+	    case OUTPUT_OBJ:
+	    case OUTPUT_RWX:
 	    case OUTPUT_VIVID:
 	    case OUTPUT_RAYSHADE:
 	    case OUTPUT_RAWTRI:
@@ -459,6 +526,8 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
 		tab_indent();
 		fprintf(gOutfile, "translate <%g %g %g>\n",
 			center[X], center[Y], center[Z]);
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 
 		if (gTexture_name != NULL) {
 		    tab_indent();
@@ -481,6 +550,8 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
 		fprintf(gOutfile, " %g", oradius);
 		if (iradius > 0.0)
 		    fprintf(gOutfile, ", %g", iradius);
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " texture { %s }", gTexture_name);
 		fprintf(gOutfile, " }\n");
@@ -496,10 +567,11 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
 		if (iradius > 0.0)
 		    fprintf(gOutfile, " %g,", iradius);
 		fprintf(gOutfile, " %g", oradius);
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " %s", gTexture_name);
 		fprintf(gOutfile, " }\n");
-		fprintf(gOutfile, "\n");
 		break;
 
 	    case OUTPUT_QRT:
@@ -517,6 +589,46 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
 		apex[W] = oradius;
 		lib_output_cylcone(base, apex, curve_format);
 		break;
+
+	    case OUTPUT_ART:
+		tab_indent();
+		fprintf(gOutfile, "ring {\n");
+		tab_inc();
+
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
+
+		tab_indent();
+		fprintf(gOutfile, "center(0, 0, 0)  radius %g radius %g\n",
+			oradius, iradius);
+
+		(void)lib_normalize_vector(normal);
+		axis_to_z(normal, &xang, &yang);
+
+		if (ABSOLUTE(xang) > EPSILON) {
+		    tab_indent();
+		    fprintf(gOutfile, "rotate (%g, x)\n", xang);
+		}
+		if (ABSOLUTE(yang) > EPSILON) {
+		    tab_indent();
+		    fprintf(gOutfile, "rotate (%g, y)\n", yang);
+		}
+
+
+		if (ABSOLUTE(center[X]) > EPSILON ||
+		    ABSOLUTE(center[Y]) > EPSILON ||
+		    ABSOLUTE(center[Z]) > EPSILON) {
+		    tab_indent();
+		    fprintf(gOutfile, "translate (%g, %g, %g)\n",
+			    center[X], center[Y], center[Z]);
+		}
+
+		tab_dec();
+		tab_indent();
+		fprintf(gOutfile, "}\n");
+		fprintf(gOutfile, "\n");
+		break;
+
 	      case OUTPUT_RIB:
 		if (iradius > 0)
 		{
@@ -524,6 +636,8 @@ lib_output_disc(center, normal, iradius, oradius, curve_format)
 		  tab_indent();
 		  fprintf(gOutfile, "TransformBegin\n");
 		  tab_inc();
+		  if (lib_tx_active())
+		      lib_output_tx_sequence();
 
 		  /* Calculate transformation from intrisic position */
 		  COPY_COORD3(axis_rib, normal);
@@ -612,6 +726,7 @@ lib_output_sq_sphere(center_pt, a1, a2, a3, n, e)
     COORD3 center_pt;
     double a1, a2, a3, n, e;
 {
+    MATRIX txmat;
     object_ptr new_object;
     int i, j, u_res, v_res;
     double u, delta_u, v, delta_v;
@@ -626,6 +741,16 @@ lib_output_sq_sphere(center_pt, a1, a2, a3, n, e)
        new_object->object_type  = SUPERQ_OBJ;
        new_object->curve_format = OUTPUT_PATCHES;
        new_object->surf_index   = gTexture_count;
+	if (lib_tx_active()) {
+	    lib_get_current_tx(txmat);
+	    new_object->tx = malloc(sizeof(MATRIX));
+	    if (new_object->tx == NULL)
+	       return;
+	    else
+	       memcpy(new_object->tx, txmat, sizeof(MATRIX));
+	    }
+	else
+	   new_object->tx = NULL;
        COPY_COORD4(new_object->object_data.superq.center_pt, center_pt);
        new_object->object_data.superq.a1 = a1;
        new_object->object_data.superq.a2 = a2;
@@ -709,6 +834,9 @@ lib_output_sphere(center_pt, curve_format)
     COORD4 center_pt;
     int curve_format;
 {
+    MATRIX txmat;
+    double trans[16];
+    COORD3 tempv;
     object_ptr new_object;
 
     if (gRT_out_format == OUTPUT_DELAYED) {
@@ -720,6 +848,16 @@ lib_output_sphere(center_pt, curve_format)
 	new_object->object_type  = SPHERE_OBJ;
 	new_object->curve_format = curve_format;
 	new_object->surf_index   = gTexture_count;
+	if (lib_tx_active()) {
+	    lib_get_current_tx(txmat);
+	    new_object->tx = malloc(sizeof(MATRIX));
+	    if (new_object->tx == NULL)
+	       return;
+	    else
+	       memcpy(new_object->tx, txmat, sizeof(MATRIX));
+	    }
+	else
+	   new_object->tx = NULL;
 	COPY_COORD4(new_object->object_data.sphere.center_pt, center_pt);
 	new_object->next_object = gLib_objects;
 	gLib_objects = new_object;
@@ -728,18 +866,40 @@ lib_output_sphere(center_pt, curve_format)
 	switch (gRT_out_format) {
 	    case OUTPUT_VIDEO:
 	    case OUTPUT_PLG:
+	    case OUTPUT_OBJ:
 		lib_output_polygon_sphere(center_pt);
 		break;
 
+	    case OUTPUT_RWX:
+		fprintf(gOutfile, "TransformBegin\n");
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
+		fprintf(gOutfile, "Translate %g %g %g\n",
+			center_pt[X], center_pt[Y], center_pt[Z]);
+		fprintf(gOutfile, "Sphere %g 3\n", center_pt[W]);
+		fprintf(gOutfile, "TransformEnd\n");
+		break;
+
 	    case OUTPUT_NFF:
+		if (lib_tx_active()) {
+		    lib_get_current_tx(txmat);
+		    lib_tx_unwind(txmat, trans);
+		    /* Transform the cone by modifying it's endpoints.  This
+		       assumes uniform scaling. */
+		    lib_transform_point(tempv, center_pt, txmat);
+		    COPY_COORD3(center_pt, tempv)
+		    center_pt[W] *= fabs(trans[U_SCALEX]);
+		    }
 		fprintf(gOutfile, "s %g %g %g %g\n",
 			center_pt[X], center_pt[Y], center_pt[Z], center_pt[W]);
 		break;
 
 	    case OUTPUT_POVRAY_10:
 		tab_indent();
-		fprintf(gOutfile, "object { sphere { <%g %g %g> %g }",
+		fprintf(gOutfile, "object { sphere { <%g %g %g> %g } ",
 			center_pt[X], center_pt[Y], center_pt[Z], center_pt[W]);
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " texture { %s }", gTexture_name);
 		fprintf(gOutfile, " }\n");
@@ -748,8 +908,10 @@ lib_output_sphere(center_pt, curve_format)
 
 	    case OUTPUT_POVRAY_20:
 		tab_indent();
-		fprintf(gOutfile, "sphere { <%g, %g, %g>, %g",
+		fprintf(gOutfile, "sphere { <%g, %g, %g>, %g ",
 			center_pt[X], center_pt[Y], center_pt[Z], center_pt[W]);
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " texture { %s }", gTexture_name);
 		fprintf(gOutfile, " }\n");
@@ -758,22 +920,41 @@ lib_output_sphere(center_pt, curve_format)
 
 	    case OUTPUT_POLYRAY:
 		tab_indent();
-		fprintf(gOutfile, "object { sphere <%g, %g, %g>, %g",
+		fprintf(gOutfile, "object { sphere <%g, %g, %g>, %g ",
 			center_pt[X], center_pt[Y], center_pt[Z], center_pt[W]);
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " %s", gTexture_name);
 		fprintf(gOutfile, " }\n");
-		fprintf(gOutfile, "\n");
 		break;
 
 	    case OUTPUT_VIVID:
+		if (lib_tx_active()) {
+		   tab_indent();
+		   fprintf(gOutfile, "transform {\n");
+		   lib_output_tx_sequence();
+		   tab_indent();
+		   fprintf(gOutfile, "}\n");
+		   }
 		tab_indent();
 		fprintf(gOutfile, "sphere { center %g %g %g radius %g }\n",
 			center_pt[X], center_pt[Y], center_pt[Z], center_pt[W]);
 		fprintf(gOutfile, "\n");
+		if (lib_tx_active())
+		   fprintf(gOutfile, "transform_pop\n");
 		break;
 
 	    case OUTPUT_QRT:
+		if (lib_tx_active()) {
+		    lib_get_current_tx(txmat);
+		    lib_tx_unwind(txmat, trans);
+		    /* Transform the cone by modifying it's endpoints.  This
+		       assumes uniform scaling. */
+		    lib_transform_point(tempv, center_pt, txmat);
+		    COPY_COORD3(center_pt, tempv)
+		    center_pt[W] *= fabs(trans[U_SCALEX]);
+		    }
 		tab_indent();
 		fprintf(gOutfile, "sphere ( loc = (%g, %g, %g), radius = %g )\n",
 			center_pt[X], center_pt[Y], center_pt[Z], center_pt[W]);
@@ -783,11 +964,23 @@ lib_output_sphere(center_pt, curve_format)
 		fprintf(gOutfile, "sphere ");
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, "%s ", gTexture_name);
-		fprintf(gOutfile, " %g %g %g %g\n",
+		fprintf(gOutfile, " %g %g %g %g ",
 			center_pt[W], center_pt[X], center_pt[Y], center_pt[Z]);
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
+		fprintf(gOutfile, "\n");
 		break;
 
 	    case OUTPUT_RTRACE:
+		if (lib_tx_active()) {
+		    lib_get_current_tx(txmat);
+		    lib_tx_unwind(txmat, trans);
+		    /* Transform the cone by modifying it's endpoints.  This
+		       assumes uniform scaling. */
+		    lib_transform_point(tempv, center_pt, txmat);
+		    COPY_COORD3(center_pt, tempv)
+		    center_pt[W] *= fabs(trans[U_SCALEX]);
+		    }
 		fprintf(gOutfile, "1 %d %g %g %g %g %g\n",
 			gTexture_count, gTexture_ior,
 			center_pt[X], center_pt[Y], center_pt[Z], center_pt[W]);
@@ -797,6 +990,8 @@ lib_output_sphere(center_pt, curve_format)
 		tab_indent();
 		fprintf(gOutfile, "sphere {\n");
 		tab_inc();
+		if (lib_tx_active())
+		    lib_output_tx_sequence();
 
 		tab_indent();
 		fprintf(gOutfile, "radius %g\n", center_pt[W]);
@@ -818,6 +1013,8 @@ lib_output_sphere(center_pt, curve_format)
 		tab_indent();
 		fprintf(gOutfile, "TransformBegin\n");
 		tab_inc();
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		tab_indent();
 		fprintf(gOutfile, "Translate %#g %#g %#g\n",
 			center_pt[X], center_pt[Y], center_pt[Z]);
@@ -842,6 +1039,7 @@ void
 lib_output_box(p1, p2)
     COORD3 p1, p2;
 {
+    MATRIX txmat;
     object_ptr new_object;
 
     if (gRT_out_format == OUTPUT_DELAYED) {
@@ -853,6 +1051,16 @@ lib_output_box(p1, p2)
 	new_object->object_type  = BOX_OBJ;
 	new_object->curve_format = OUTPUT_PATCHES;
 	new_object->surf_index   = gTexture_count;
+	if (lib_tx_active()) {
+	    lib_get_current_tx(txmat);
+	    new_object->tx = malloc(sizeof(MATRIX));
+	    if (new_object->tx == NULL)
+	       return;
+	    else
+	       memcpy(new_object->tx, txmat, sizeof(MATRIX));
+	    }
+	else
+	   new_object->tx = NULL;
 	COPY_COORD3(new_object->object_data.box.point1, p1);
 	COPY_COORD3(new_object->object_data.box.point2, p2);
 	new_object->next_object = gLib_objects;
@@ -863,9 +1071,11 @@ lib_output_box(p1, p2)
 	    case OUTPUT_NFF:
 	    case OUTPUT_VIVID:
 	    case OUTPUT_PLG:
+	    case OUTPUT_OBJ:
 	    case OUTPUT_RAWTRI:
 	    case OUTPUT_RIB:
 	    case OUTPUT_DXF:
+	    case OUTPUT_RWX:
 		lib_output_polygon_box(p1, p2);
 		break;
 
@@ -873,6 +1083,8 @@ lib_output_box(p1, p2)
 		tab_indent();
 		fprintf(gOutfile, "object { box { <%g %g %g> <%g %g %g> }",
 			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " texture { %s }", gTexture_name);
 		fprintf(gOutfile, " }\n");
@@ -883,6 +1095,8 @@ lib_output_box(p1, p2)
 		tab_indent();
 		fprintf(gOutfile, "box { <%g, %g, %g>, <%g, %g, %g>  ",
 			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " texture { %s }", gTexture_name);
 		fprintf(gOutfile, " }\n");
@@ -892,10 +1106,11 @@ lib_output_box(p1, p2)
 	    case OUTPUT_POLYRAY:
 		fprintf(gOutfile, "object { box <%g, %g, %g>, <%g, %g, %g>",
 			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, " %s", gTexture_name);
 		fprintf(gOutfile, " }\n");
-		fprintf(gOutfile, "\n");
 		break;
 
 	    case OUTPUT_QRT:
@@ -908,13 +1123,18 @@ lib_output_box(p1, p2)
 		fprintf(gOutfile, "box ");
 		if (gTexture_name != NULL)
 		    fprintf(gOutfile, "%s ", gTexture_name);
-		fprintf(gOutfile, " %g %g %g %g %g %g\n",
+		fprintf(gOutfile, " %g %g %g %g %g %g",
 			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
+		fprintf(gOutfile, "\n");
 		break;
 
 	    case OUTPUT_ART:
 		tab_indent();
-		fprintf(gOutfile, "box {");
+		fprintf(gOutfile, "box {\n");
+		if (lib_tx_active())
+		   lib_output_tx_sequence();
 		fprintf(gOutfile, " vertex(%g, %g, %g)\n",
 			p1[X], p1[Y], p1[Z]);
 		fprintf(gOutfile, " vertex(%g, %g, %g) }\n",
@@ -923,12 +1143,15 @@ lib_output_box(p1, p2)
 		break;
 
 	    case OUTPUT_RTRACE:
-		fprintf(gOutfile, "2 %d %g %g %g %g %g %g %g\n",
-			gTexture_count, gTexture_ior,
-			(p1[X] + p2[X]) / 2.0,
-			(p1[Y] + p2[Y]) / 2.0,
-			(p1[Z] + p2[Z]) / 2.0,
-			p2[X] - p1[X], p2[Y] - p1[Y], p2[Z] - p1[Z]);
+		if (lib_tx_active())
+		    lib_output_polygon_box(p1, p2);
+		else
+		   fprintf(gOutfile, "2 %d %g %g %g %g %g %g %g\n",
+			   gTexture_count, gTexture_ior,
+			   (p1[X] + p2[X]) / 2.0,
+			   (p1[Y] + p2[Y]) / 2.0,
+			   (p1[Z] + p2[Z]) / 2.0,
+			   p2[X] - p1[X], p2[Y] - p1[Y], p2[Z] - p1[Z]);
 		break;
 	}
     }

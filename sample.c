@@ -96,6 +96,12 @@ main(argc, argv)
     SET_COORD4(apex, 0,  2, 0, 0.1);
     lib_output_cylcone(base, apex, output_format);
 
+    lib_set_polygonalization(4, 1);
+    lib_output_color(NULL, Red, 0.1, 0.7, 0.0, 0.7, 5.0, 0.0, 1.0);
+    SET_COORD3(base, 0, -2, 0);
+    SET_COORD3(apex, 0,  1, 0);
+    lib_output_disc(base, apex, 0.0, 4.0, output_format);
+
     lib_close();
 
     PLATFORM_SHUTDOWN();

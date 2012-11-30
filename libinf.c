@@ -33,6 +33,7 @@ FILE * gStdout_file = NULL;
 FILE *gOutfile      = stdout;
 char *gTexture_name = NULL;
 int  gTexture_count = 0;
+int  gObject_count = 0;
 double gTexture_ior = 1.0;
 int  gRT_out_format        = OUTPUT_NFF;
 int  gRT_orig_format   = OUTPUT_NFF;
@@ -49,25 +50,25 @@ object_ptr gLib_objects = NULL;
 light_ptr gLib_lights = NULL;
 viewpoint gViewpoint = {
 	{0, 0, -10},
-	{0, 0, 0},
-	{0, 1, 0},
-	45, 1, 1.0e-3, 10, 128, 128,
-	{ {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1} }
+    {0, 0, 0},
+      {0, 1, 0},
+      45, 1, 1.0e-3, 10, 128, 128,
+    { {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1} }
 };
 
 /* Globals for tracking indentation level of output file */
-int	gTab_width = 4;
-int	gTab_level = 0;
+int      gTab_width = 4;
+int      gTab_level = 0;
 
 
 
 /*-----------------------------------------------------------------*/
 void tab_indent PARAMS((void))
 {
-    int	k;
+    int      k;
     /* Q&D way to do it... */
     for (k=0; k<gTab_width*gTab_level; k++)
-	putc(' ', gOutfile);
+      putc(' ', gOutfile);
 } /* tab_printf */
 
 
@@ -107,9 +108,9 @@ lib_set_output_file(new_outfile)
     FILE *new_outfile;
 {
     if (new_outfile == NULL)
-	gOutfile = stdout;
+     gOutfile = stdout;
     else
-	gOutfile = new_outfile;
+      gOutfile = new_outfile;
 }
 
 /*-----------------------------------------------------------------*/
@@ -126,8 +127,8 @@ lib_set_raytracer(default_tracer)
     int default_tracer;
 {
     if (default_tracer < OUTPUT_VIDEO ||
-	default_tracer > OUTPUT_DELAYED) {
-	fprintf(stderr, "Unknown renderer index: %d\n", default_tracer);
+     default_tracer > OUTPUT_DELAYED) {
+      fprintf(stderr, "Unknown renderer index: %d\n", default_tracer);
 	exit(1);
     }
     gRT_out_format = default_tracer;
@@ -153,8 +154,14 @@ lookup_surface_stats(index, tcount, tior)
     surface_ptr temp_ptr = gLib_surfaces;
 
     while (temp_ptr != NULL && temp_ptr->surf_index != index)
-	temp_ptr = temp_ptr->next;
-    *tior = temp_ptr->ior;
-    if (*tior < 1.0) *tior = 1.0;
-    *tcount = temp_ptr->surf_index;
+       temp_ptr = temp_ptr->next;
+    if (temp_ptr != NULL) {
+      *tior = temp_ptr->ior;
+      if (*tior < 1.0) *tior = 1.0;
+      *tcount = temp_ptr->surf_index;
+    }
+    else {
+       *tior = 1.0;
+       *tcount = 0;
+    }
 }

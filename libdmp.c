@@ -73,6 +73,46 @@ dump_plg_file PARAMS((void))
 
 /*-----------------------------------------------------------------*/
 void
+dump_obj_file PARAMS((void))
+{
+    object_ptr temp_obj;
+    int i;
+    unsigned int vcnt;
+
+    /* Dump all vertices */
+    for (temp_obj = gPolygon_stack;
+	 temp_obj != NULL;
+	 temp_obj = temp_obj->next_object) {
+
+	PLATFORM_MULTITASK();
+	for (i=0;i<temp_obj->object_data.polygon.tot_vert;i++) {
+	    fprintf(gOutfile, "v %g %g %g\n",
+		   temp_obj->object_data.polygon.vert[i][X],
+		   temp_obj->object_data.polygon.vert[i][Y],
+		   temp_obj->object_data.polygon.vert[i][Z]);
+	}
+    }
+
+    /* Dump all faces */
+    vcnt = 0;
+    for (temp_obj = gPolygon_stack;
+	 temp_obj != NULL;
+	 temp_obj = temp_obj->next_object) {
+
+	PLATFORM_MULTITASK();
+	fprintf(gOutfile, "f ", temp_obj->object_data.polygon.tot_vert);
+	for (i=0;i<temp_obj->object_data.polygon.tot_vert;i++) {
+	    fprintf(gOutfile, "%d", vcnt + i + 1);
+	    if (i < temp_obj->object_data.polygon.tot_vert - 1)
+	       fprintf(gOutfile, " ");
+	    }
+	fprintf(gOutfile, "\n");
+	vcnt += i;
+    }
+}
+
+/*-----------------------------------------------------------------*/
+void
 dump_all_objects()
 {
     object_ptr temp_obj;
@@ -81,13 +121,19 @@ dump_all_objects()
 	fprintf(gOutfile, "Objects\n");
 
     /* Step through all objects dumping them as we go. */
-    for (temp_obj = gLib_objects;
+    for (temp_obj = gLib_objects, gObject_count = 0;
 	 temp_obj != NULL;
-	 temp_obj = temp_obj->next_object) {
+	 temp_obj = temp_obj->next_object, gObject_count++) {
 
 	PLATFORM_MULTITASK();
-	lookup_surface_stats(temp_obj->surf_index,
-		&gTexture_count, &gTexture_ior);
+	lookup_surface_stats(temp_obj->surf_index, &gTexture_count,
+			     &gTexture_ior);
+	if (temp_obj->tx != NULL) {
+	   /* Set the active transform to what it was at the time
+	      the object was created */
+	   lib_tx_push();
+	   lib_set_current_tx(*temp_obj->tx);
+	   }
 	switch (temp_obj->object_type) {
 	    case BOX_OBJ:
 		lib_output_box(temp_obj->object_data.box.point1,
@@ -149,6 +195,10 @@ dump_all_objects()
 		fprintf(gOutfile, "Bad object type: %d\n",
 			  temp_obj->object_type);
 		exit(1);
+	}
+	if (temp_obj->tx != NULL) {
+	   /* Reset the active transform */
+	   lib_tx_pop();
 	}
     }
 

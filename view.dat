@@ -1,5 +1,5 @@
 5 -20 0		# from
-0 0 -2.5	# at
+0 0 0		# at (0 0 -2.5 is good for f117.dxf
 0 0 1		# up
 20		# angle
-# the above is a default view file for showdxf
+# the above is a default view file for readdxf
